@@ -71,6 +71,8 @@ export interface IconEditorState {
   renameIcon: (name: string, next: string) => void;
   addIcon: (name: string) => void;
   removeIcon: (name: string) => void;
+  /** Move `name` to just before `beforeName`, or to the end if `beforeName` is null. */
+  reorderIcon: (name: string, beforeName: string | null) => void;
   undo: () => void;
   redo: () => void;
 }
@@ -186,6 +188,21 @@ export const useIconStore = create<IconEditorState>()((set, get) => ({
       undoStack: [],
       redoStack: [],
     });
+  },
+
+  reorderIcon: (name, beforeName) => {
+    const { project } = get();
+    if (name === beforeName) return;
+    const icons = [...project.icons];
+    const fromIndex = icons.findIndex((icon) => icon.name === name);
+    if (fromIndex < 0) return;
+    const [moved] = icons.splice(fromIndex, 1);
+    const toIndex =
+      beforeName === null
+        ? icons.length
+        : icons.findIndex((icon) => icon.name === beforeName);
+    icons.splice(toIndex < 0 ? icons.length : toIndex, 0, moved);
+    set({ project: { ...project, icons } });
   },
 
   undo: () => {

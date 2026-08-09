@@ -1,5 +1,5 @@
 import { PlusIcon } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,11 +56,15 @@ export function IconList({ className, ...others }: IconListProps) {
   const setFilter = useIconStore((state) => state.setFilter);
   const selectName = useIconStore((state) => state.selectName);
   const addIcon = useIconStore((state) => state.addIcon);
+  const reorderIcon = useIconStore((state) => state.reorderIcon);
 
   const filtered = useMemo(
     () => project.icons.filter((icon) => matches(icon, filter)),
     [project.icons, filter],
   );
+
+  const [dragName, setDragName] = useState<string | null>(null);
+  const [overName, setOverName] = useState<string | null>(null);
 
   const handleAdd = () => {
     addIcon(filter.trim() || "icon");
@@ -102,20 +106,62 @@ export function IconList({ className, ...others }: IconListProps) {
       </div>
       <div className="min-h-0 flex-1">
         <ScrollArea className="h-full w-full">
-          <div className="grid grid-cols-4 gap-2 px-3 pb-3">
+          <div
+            className="grid grid-cols-4 gap-2 px-3 pb-3"
+            onDragOver={(event) => {
+              if (dragName) event.preventDefault();
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              if (dragName) reorderIcon(dragName, null);
+              setDragName(null);
+              setOverName(null);
+            }}
+          >
             {filtered.map((icon) => {
               const selected = icon.name === name;
               return (
                 <button
                   key={icon.name}
                   title={icon.name}
+                  draggable
                   className="flex min-w-0 cursor-pointer flex-col items-center gap-0.5"
                   onClick={() => selectName(icon.name)}
+                  onDragStart={(event) => {
+                    setDragName(icon.name);
+                    event.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragEnd={() => {
+                    setDragName(null);
+                    setOverName(null);
+                  }}
+                  onDragOver={(event) => {
+                    if (!dragName || dragName === icon.name) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setOverName(icon.name);
+                  }}
+                  onDragLeave={() => {
+                    setOverName((current) =>
+                      current === icon.name ? null : current,
+                    );
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (dragName && dragName !== icon.name) {
+                      reorderIcon(dragName, icon.name);
+                    }
+                    setDragName(null);
+                    setOverName(null);
+                  }}
                 >
                   <div
                     className={cn(
                       "flex aspect-square w-full items-center justify-center overflow-hidden border-[1.5px] border-neutral-800 hover:bg-neutral-800",
                       selected && "border-neutral-100 bg-neutral-100",
+                      dragName === icon.name && "opacity-40",
+                      overName === icon.name && "border-sky-400",
                     )}
                   >
                     <IconThumb
