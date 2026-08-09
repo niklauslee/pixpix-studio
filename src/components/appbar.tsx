@@ -12,6 +12,13 @@ const APP_LABELS: Record<AppbarApp, string> = {
   dashboard: "Dashboard",
 };
 
+/** Maps the current app to the dashboard tab it should link back to. */
+const DASHBOARD_VIEW: Partial<Record<AppbarApp, string>> = {
+  scene: "scenes",
+  font: "fonts",
+  icon: "icons",
+};
+
 interface AppbarProps extends React.HTMLAttributes<HTMLDivElement> {
   active: AppbarApp;
   /** App-specific actions, right-aligned. */
@@ -46,7 +53,7 @@ export function Appbar({
         </div>
         {active !== "dashboard" && (
           <a
-            href="/dashboard"
+            href={`/dashboard?view=${DASHBOARD_VIEW[active]}`}
             title="Back to Dashboard"
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >

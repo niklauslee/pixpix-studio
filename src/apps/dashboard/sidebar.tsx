@@ -6,9 +6,6 @@ export type DashboardView = "scenes" | "fonts" | "icons";
 interface SidebarProps {
   active: DashboardView;
   onChange: (view: DashboardView) => void;
-  sceneCount: number | null;
-  fontCount: number | null;
-  iconSetCount: number | null;
 }
 
 const ITEMS: {
@@ -21,19 +18,7 @@ const ITEMS: {
   { id: "icons", label: "Icon Sets", icon: ImageIcon },
 ];
 
-export function Sidebar({
-  active,
-  onChange,
-  sceneCount,
-  fontCount,
-  iconSetCount,
-}: SidebarProps) {
-  const counts: Record<DashboardView, number | null> = {
-    scenes: sceneCount,
-    fonts: fontCount,
-    icons: iconSetCount,
-  };
-
+export function Sidebar({ active, onChange }: SidebarProps) {
   return (
     <aside className="flex w-48 shrink-0 flex-col border-r-[1.5px] border-neutral-700 py-3">
       {ITEMS.map(({ id, label, icon: Icon }) => (
@@ -50,11 +35,6 @@ export function Sidebar({
         >
           <Icon className="size-3.5 shrink-0" />
           <span className="flex-1">{label}</span>
-          {counts[id] !== null && (
-            <span className="text-[10px] text-muted-foreground">
-              {counts[id]}
-            </span>
-          )}
         </button>
       ))}
     </aside>

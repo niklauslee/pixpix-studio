@@ -129,7 +129,14 @@ function App({ user }: { user: DashboardUser }) {
     null,
   );
   const [notice, setNotice] = useState("");
-  const [view, setView] = useState<DashboardView>("scenes");
+  const [view, setView] = useState<DashboardView>(() => {
+    const requested = new URLSearchParams(window.location.search).get(
+      "view",
+    );
+    return requested === "fonts" || requested === "icons"
+      ? requested
+      : "scenes";
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const sceneFileRef = useRef<HTMLInputElement>(null);
   const iconSetFileRef = useRef<HTMLInputElement>(null);
@@ -139,26 +146,43 @@ function App({ user }: { user: DashboardUser }) {
     setTimeout(() => setNotice(""), 3000);
   };
 
-  const load = async () => {
-    try {
-      const [scenesResponse, fontsResponse, iconSetsResponse] =
-        await Promise.all([
-          api("/api/scenes"),
-          api("/api/fonts"),
-          api("/api/icon-sets"),
-        ]);
-      setScenes(await scenesResponse.json());
-      setFonts(await fontsResponse.json());
-      setIconSets(await iconSetsResponse.json());
-    } catch (error) {
-      console.error("Failed to load the dashboard:", error);
-      flash("Failed to load your scenes, fonts and icon sets");
-    }
+  const changeView = (next: DashboardView) => {
+    setView(next);
+    history.replaceState(null, "", `/dashboard?view=${next}`);
   };
 
   useEffect(() => {
-    load();
-  }, []);
+    if (view !== "scenes" || scenes !== null) return;
+    api("/api/scenes")
+      .then((response) => response.json() as Promise<SceneRow[]>)
+      .then(setScenes)
+      .catch((error) => {
+        console.error("Failed to load scenes:", error);
+        flash("Failed to load your scenes");
+      });
+  }, [view, scenes]);
+
+  useEffect(() => {
+    if (view !== "fonts" || fonts !== null) return;
+    api("/api/fonts")
+      .then((response) => response.json() as Promise<FontRow[]>)
+      .then(setFonts)
+      .catch((error) => {
+        console.error("Failed to load fonts:", error);
+        flash("Failed to load your fonts");
+      });
+  }, [view, fonts]);
+
+  useEffect(() => {
+    if (view !== "icons" || iconSets !== null) return;
+    api("/api/icon-sets")
+      .then((response) => response.json() as Promise<IconSetRow[]>)
+      .then(setIconSets)
+      .catch((error) => {
+        console.error("Failed to load icon sets:", error);
+        flash("Failed to load your icon sets");
+      });
+  }, [view, iconSets]);
 
   const handleUploadScene = async (file: File) => {
     try {
@@ -447,13 +471,7 @@ function App({ user }: { user: DashboardUser }) {
         </Appbar>
 
         <div className="flex min-h-0 flex-1">
-          <Sidebar
-            active={view}
-            onChange={setView}
-            sceneCount={scenes?.length ?? null}
-            fontCount={fonts?.length ?? null}
-            iconSetCount={iconSets?.length ?? null}
-          />
+          <Sidebar active={view} onChange={changeView} />
 
           <div className="min-h-0 flex-1 overflow-auto">
             <div className="mx-auto max-w-3xl px-6 py-8">
