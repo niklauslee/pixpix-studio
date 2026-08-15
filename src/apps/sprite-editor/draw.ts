@@ -1,14 +1,26 @@
 /**
  * Bitmap operations on a sprite's pixel array. Every function returns a new
  * array — pixel arrays are treated as immutable so React and the undo stack can
- * compare them by reference. Unlike the icon editor, pixels are palette
- * indices (0-15) rather than booleans, so every tool takes a `color`
+ * compare them by reference. Unlike the icon editor, pixels are packed RGB
+ * colors (`0xRRGGBB`) rather than booleans, so every tool takes a `color`
  * parameter instead of an `on` flag.
  */
 
 import { emptyPixels, getPixel, type Box } from "./sprite";
 
-export type Tool = "pen" | "eraser" | "line" | "rect" | "rect-fill" | "fill";
+/**
+ * `eyedropper` doesn't paint — `sprite-canvas.tsx` intercepts it before it
+ * ever reaches the bitmap operations above and reads a pixel's color into
+ * the store's `color` instead.
+ */
+export type Tool =
+  | "pen"
+  | "eraser"
+  | "line"
+  | "rect"
+  | "rect-fill"
+  | "fill"
+  | "eyedropper";
 
 export interface Point {
   col: number;

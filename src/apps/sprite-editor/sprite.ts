@@ -1,8 +1,10 @@
 /**
  * Sprite set model. Every sprite in a set shares one fixed pixel box, same as
- * the icon editor's `IconSet` — but each pixel is a palette index (0-15, see
- * `palette.ts`) instead of a boolean.
+ * the icon editor's `IconSet` — but each pixel is a packed 24-bit RGB color
+ * (`0xRRGGBB`, see `palette.ts`) instead of a boolean.
  */
+
+import { DEFAULT_PALETTE } from "./palette";
 
 export interface Box {
   w: number;
@@ -11,12 +13,14 @@ export interface Box {
 
 export interface Sprite {
   name: string;
-  /** Row-major palette-index bitmap in the set's box frame, length = `box.w * box.h`. */
+  /** Row-major RGB (`0xRRGGBB`) bitmap in the set's box frame, length = `box.w * box.h`. */
   pixels: number[];
 }
 
 export interface SpriteSet {
   box: Box;
+  /** The set's editable swatch list (`0xRRGGBB`), shown in the toolbar — not a constraint on pixel values. */
+  palette: number[];
   /** Sprites, in creation/import order. */
   sprites: Sprite[];
 }
@@ -56,7 +60,7 @@ export function createSprite(box: Box, name: string): Sprite {
 }
 
 export function createSpriteSet(box: Partial<Box> = {}): SpriteSet {
-  return { box: { w: 16, h: 16, ...box }, sprites: [] };
+  return { box: { w: 16, h: 16, ...box }, palette: [...DEFAULT_PALETTE], sprites: [] };
 }
 
 /**
@@ -86,13 +90,14 @@ export function resizeBox(project: SpriteSet, box: Box): SpriteSet {
   return { ...project, box, sprites };
 }
 
-/** Pack a pixel bitmap 4 bits/pixel (2 pixels per byte) and base64-encode it for JSON. */
+/** Pack a pixel bitmap 3 bytes/pixel (RGB) and base64-encode it for JSON. */
 function packPixels(pixels: number[]): string {
-  const bytes = new Uint8Array(Math.ceil(pixels.length / 2));
+  const bytes = new Uint8Array(pixels.length * 3);
   for (let i = 0; i < pixels.length; i++) {
-    const nibble = pixels[i] & 0xf;
-    if (i % 2 === 0) bytes[i >> 1] |= nibble;
-    else bytes[i >> 1] |= nibble << 4;
+    const color = pixels[i] & 0xffffff;
+    bytes[i * 3] = (color >> 16) & 0xff;
+    bytes[i * 3 + 1] = (color >> 8) & 0xff;
+    bytes[i * 3 + 2] = color & 0xff;
   }
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -104,9 +109,11 @@ function unpackPixels(packed: string, count: number): number[] {
   const binary = atob(packed);
   const pixels = new Array<number>(count).fill(0);
   for (let i = 0; i < count; i++) {
-    const byte = binary.charCodeAt(i >> 1);
-    if (byte !== byte) break; // NaN once past the end of `binary`
-    pixels[i] = i % 2 === 0 ? byte & 0xf : (byte >> 4) & 0xf;
+    const r = binary.charCodeAt(i * 3);
+    if (r !== r) break; // NaN once past the end of `binary`
+    const g = binary.charCodeAt(i * 3 + 1) || 0;
+    const b = binary.charCodeAt(i * 3 + 2) || 0;
+    pixels[i] = (r << 16) | (g << 8) | b;
   }
   return pixels;
 }
@@ -122,7 +129,7 @@ export function serializeSpriteSet(project: SpriteSet): string {
     name: sprite.name,
     pixels: packPixels(sprite.pixels),
   }));
-  return JSON.stringify({ box: project.box, sprites });
+  return JSON.stringify({ box: project.box, palette: project.palette, sprites });
 }
 
 /** Parse and validate sprite set JSON. Throws on invalid input. */
@@ -131,7 +138,7 @@ export function parseSpriteSet(json: string): SpriteSet {
   if (typeof parsed !== "object" || parsed === null) {
     throw new Error("Not a valid sprite set file");
   }
-  const { box, sprites } = parsed as Record<string, unknown>;
+  const { box, palette, sprites } = parsed as Record<string, unknown>;
   if (
     typeof box !== "object" ||
     box === null ||
@@ -142,6 +149,9 @@ export function parseSpriteSet(json: string): SpriteSet {
   }
   if (!Array.isArray(sprites)) throw new Error("Not a valid sprite set file");
   const validBox = { w: Math.max(1, (box as Box).w), h: Math.max(1, (box as Box).h) };
+  const validPalette = Array.isArray(palette)
+    ? palette.filter((value): value is number => typeof value === "number")
+    : [];
   const count = pixelCount(validBox);
   const validSprites: Sprite[] = sprites.map((item) => {
     if (
@@ -157,5 +167,9 @@ export function parseSpriteSet(json: string): SpriteSet {
       pixels: unpackPixels((item as SerializedSprite).pixels, count),
     };
   });
-  return { box: validBox, sprites: validSprites };
+  return {
+    box: validBox,
+    palette: validPalette.length > 0 ? validPalette : [...DEFAULT_PALETTE],
+    sprites: validSprites,
+  };
 }
