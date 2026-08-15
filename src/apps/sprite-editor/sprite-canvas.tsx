@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { PALETTE } from "./palette";
-import type { Box, Sprite } from "./sprite";
+import { toHex } from "./palette";
+import { getPixel, type Box, type Sprite } from "./sprite";
 import {
   drawLine,
   drawRect,
@@ -82,10 +82,13 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
   const cellSize = useSpriteStore((state) => state.cellSize);
   const showGuides = useSpriteStore((state) => state.showGuides);
   const commitPixels = useSpriteStore((state) => state.commitPixels);
+  const setColor = useSpriteStore((state) => state.setColor);
   const setHover = useSpriteStore((state) => state.setHover);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const strokeRef = useRef<Stroke | null>(null);
+  /** Set while dragging with the eyedropper, so pointermove keeps sampling. */
+  const pickingRef = useRef(false);
   /** Bitmap of the in-progress stroke, or null when not drawing. */
   const [draft, setDraft] = useState<number[] | null>(null);
   const draftRef = useRef<number[] | null>(null);
@@ -114,7 +117,7 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
     // pixels
     for (let row = 0; row < box.h; row++) {
       for (let col = 0; col < box.w; col++) {
-        ctx.fillStyle = PALETTE[pixels[row * box.w + col] ?? 0] ?? PALETTE[0];
+        ctx.fillStyle = toHex(pixels[row * box.w + col] ?? 0);
         ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
       }
     }
@@ -180,7 +183,12 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
     const point = pointAt(event);
     if (!inside(point)) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    // eraser / alt / right button always paints palette index 0
+    if (tool === "eyedropper") {
+      pickingRef.current = true;
+      setColor(getPixel(box, sprite.pixels, point.col, point.row));
+      return;
+    }
+    // eraser / alt / right button always paints black (0x000000)
     const erase =
       tool === "eraser" ||
       event.altKey ||
@@ -204,6 +212,10 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const point = pointAt(event);
     setHover(inside(point) ? point : null);
+    if (pickingRef.current) {
+      if (inside(point)) setColor(getPixel(box, sprite.pixels, point.col, point.row));
+      return;
+    }
     const stroke = strokeRef.current;
     if (!stroke) return;
     if (point.col === stroke.last.col && point.row === stroke.last.row) return;
@@ -216,6 +228,7 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
   };
 
   const endStroke = () => {
+    pickingRef.current = false;
     if (!strokeRef.current) return;
     strokeRef.current = null;
     const pixels = draftRef.current;
@@ -230,7 +243,10 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
     >
       <canvas
         ref={canvasRef}
-        className="touch-none cursor-crosshair"
+        className={cn(
+          "touch-none",
+          tool === "eyedropper" ? "cursor-copy" : "cursor-crosshair",
+        )}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endStroke}

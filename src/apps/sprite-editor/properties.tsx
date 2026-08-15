@@ -1,4 +1,4 @@
-import { CircleQuestionMarkIcon } from "lucide-react";
+import { CircleQuestionMarkIcon, CopyIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -95,6 +95,7 @@ function SpriteProperties() {
   const project = useSpriteStore((state) => state.project);
   const name = useSpriteStore((state) => state.name);
   const renameSprite = useSpriteStore((state) => state.renameSprite);
+  const duplicateSprite = useSpriteStore((state) => state.duplicateSprite);
   const removeSprite = useSpriteStore((state) => state.removeSprite);
   const sprite = findSprite(project, name);
 
@@ -118,6 +119,16 @@ function SpriteProperties() {
           variant="outline"
           size="sm"
           className="flex-1"
+          title={`Duplicate "${sprite.name}" ⎯ Mod+D`}
+          onClick={() => duplicateSprite(sprite.name)}
+        >
+          <CopyIcon className="size-3.5" />
+          Duplicate
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1"
           onClick={() => {
             useConfirmDialog
               .getState()
@@ -128,11 +139,12 @@ function SpriteProperties() {
               );
           }}
         >
-          Delete Sprite
+          Delete
         </Button>
-        <Help title="Delete Sprite">
-          Removes the sprite from the project. Structural edits clear the
-          undo stack, so this cannot be undone.
+        <Help title="Duplicate / Delete Sprite">
+          Duplicate inserts a copy right after this sprite. Delete removes it
+          from the project. Both are structural edits and clear the undo
+          stack, so delete cannot be undone.
         </Help>
       </div>
     </div>

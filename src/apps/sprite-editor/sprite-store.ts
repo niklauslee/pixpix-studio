@@ -46,7 +46,7 @@ export interface SpriteEditorState {
   /** Name of the sprite being edited, `""` when the project has no sprites. */
   name: string;
   tool: Tool;
-  /** Currently selected palette index (0-15) used by pen/line/rect/fill. */
+  /** Currently selected RGB color (`0xRRGGBB`) used by pen/line/rect/fill. */
   color: number;
   /** Editing grid zoom, in screen pixels per sprite pixel. */
   cellSize: number;
@@ -64,6 +64,10 @@ export interface SpriteEditorState {
   selectAdjacent: (delta: number) => void;
   setTool: (tool: Tool) => void;
   setColor: (color: number) => void;
+  /** Add a color to the project's palette swatch list, if not already present. */
+  addPaletteColor: (color: number) => void;
+  /** Remove a color from the project's palette swatch list. */
+  removePaletteColor: (color: number) => void;
   setCellSize: (cellSize: number) => void;
   setShowGuides: (showGuides: boolean) => void;
   setFilter: (filter: string) => void;
@@ -73,6 +77,8 @@ export interface SpriteEditorState {
   updateProject: (box: Partial<Box>) => void;
   renameSprite: (name: string, next: string) => void;
   addSprite: (name: string) => void;
+  /** Insert a copy of `name`'s sprite right after it, with a unique name, and select it. */
+  duplicateSprite: (name: string) => void;
   removeSprite: (name: string) => void;
   /** Move `name` to just before `beforeName`, or to the end if `beforeName` is null. */
   reorderSprite: (name: string, beforeName: string | null) => void;
@@ -98,7 +104,7 @@ export const useSpriteStore = create<SpriteEditorState>()((set, get) => ({
   project,
   name: firstName(project),
   tool: "pen",
-  color: 1,
+  color: 0x0000aa,
   cellSize: loadCellSize(),
   showGuides: true,
   filter: "",
@@ -121,7 +127,22 @@ export const useSpriteStore = create<SpriteEditorState>()((set, get) => ({
   },
 
   setTool: (tool) => set({ tool }),
-  setColor: (color) => set({ color: Math.max(0, Math.min(15, color)) }),
+  setColor: (color) => set({ color: color & 0xffffff }),
+  addPaletteColor: (color) => {
+    const { project } = get();
+    const next = color & 0xffffff;
+    if (project.palette.includes(next)) return;
+    set({ project: { ...project, palette: [...project.palette, next] } });
+  },
+  removePaletteColor: (color) => {
+    const { project } = get();
+    set({
+      project: {
+        ...project,
+        palette: project.palette.filter((item) => item !== color),
+      },
+    });
+  },
   setCellSize: (cellSize) => {
     const clamped = Math.max(
       MIN_CELL_SIZE,
@@ -173,6 +194,23 @@ export const useSpriteStore = create<SpriteEditorState>()((set, get) => ({
     const { project } = get();
     const unique = uniqueName(project, name || "sprite");
     const sprites = [...project.sprites, createSprite(project.box, unique)];
+    set({
+      project: { ...project, sprites },
+      name: unique,
+      undoStack: [],
+      redoStack: [],
+    });
+  },
+
+  duplicateSprite: (name) => {
+    const { project } = get();
+    const index = project.sprites.findIndex((sprite) => sprite.name === name);
+    if (index < 0) return;
+    const source = project.sprites[index];
+    const unique = uniqueName(project, source.name);
+    const copy: Sprite = { name: unique, pixels: [...source.pixels] };
+    const sprites = [...project.sprites];
+    sprites.splice(index + 1, 0, copy);
     set({
       project: { ...project, sprites },
       name: unique,

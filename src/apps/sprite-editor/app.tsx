@@ -19,6 +19,7 @@ const TOOL_KEYS: Record<string, Tool> = {
   r: "rect",
   R: "rect-fill",
   f: "fill",
+  i: "eyedropper",
 };
 
 const SHIFT_KEYS: Record<string, [number, number]> = {
@@ -171,6 +172,11 @@ function App({
         event.preventDefault();
         if (event.shiftKey) store.redo();
         else store.undo();
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        if (current) store.duplicateSprite(current.name);
         return;
       }
       if (mod && (event.key === "=" || event.key === "+")) {

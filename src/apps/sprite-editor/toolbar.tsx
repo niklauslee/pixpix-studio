@@ -13,14 +13,16 @@ import {
   MinusIcon,
   PaintBucketIcon,
   PencilIcon,
+  PipetteIcon,
   PlusIcon,
   Redo2Icon,
   SlashIcon,
   SquareIcon,
   Trash2Icon,
   Undo2Icon,
+  XIcon,
 } from "lucide-react";
-import { PALETTE } from "./palette";
+import { toHex, fromHex } from "./palette";
 import { findSprite } from "./sprite";
 import { clear, flipHorizontal, flipVertical, shift, type Tool } from "./draw";
 import { useSpriteStore } from "./sprite-store";
@@ -54,6 +56,7 @@ const TOOLS: {
     iconClassName: "fill-current",
   },
   { id: "fill", label: "Fill", key: "F", icon: PaintBucketIcon },
+  { id: "eyedropper", label: "Eyedropper", key: "I", icon: PipetteIcon },
 ];
 
 const SHIFTS: {
@@ -81,6 +84,10 @@ export function Toolbar() {
   const showGuides = useSpriteStore((state) => state.showGuides);
   const setTool = useSpriteStore((state) => state.setTool);
   const setColor = useSpriteStore((state) => state.setColor);
+  const addPaletteColor = useSpriteStore((state) => state.addPaletteColor);
+  const removePaletteColor = useSpriteStore(
+    (state) => state.removePaletteColor,
+  );
   const setCellSize = useSpriteStore((state) => state.setCellSize);
   const setShowGuides = useSpriteStore((state) => state.setShowGuides);
   const commitPixels = useSpriteStore((state) => state.commitPixels);
@@ -211,23 +218,59 @@ export function Toolbar() {
         </Label>
       </div>
 
-      {/* third row: palette — picks the color used by pen/line/rect/fill */}
+      {/* third row: a color picker plus the project's editable palette swatches */}
       <div className="flex min-h-10 w-full flex-wrap items-center gap-1.5 px-4 pb-2">
-        {PALETTE.map((hex, index) => (
-          <button
-            key={index}
-            type="button"
-            title={`Color ${index} ⎯ ${hex}`}
-            className={cn(
-              "size-7 shrink-0 cursor-pointer rounded-sm border-[1.5px]",
-              color === index
-                ? "border-neutral-100 ring-1 ring-neutral-100"
-                : "border-neutral-700",
-            )}
-            style={{ backgroundColor: hex }}
-            onClick={() => setColor(index)}
+        <label
+          className="relative size-6 shrink-0 cursor-pointer overflow-hidden border-[1.5px] border-neutral-700"
+          title={`Custom color ⎯ ${toHex(color)}`}
+          style={{ backgroundColor: toHex(color) }}
+        >
+          <input
+            type="color"
+            value={toHex(color)}
+            onChange={(event) => setColor(fromHex(event.target.value))}
+            className="absolute inset-0 size-full cursor-pointer opacity-0"
           />
-        ))}
+        </label>
+        <Button
+          size="icon-sm"
+          variant="outline"
+          title="Add current color to the palette"
+          onClick={() => addPaletteColor(color)}
+        >
+          <PlusIcon className={ICON} />
+        </Button>
+        <div className="h-6 w-px bg-neutral-700" />
+        {project.palette.map((paletteColor) => {
+          const hex = toHex(paletteColor);
+          return (
+            <div key={paletteColor} className="group relative">
+              <button
+                type="button"
+                title={hex}
+                className={cn(
+                  "size-6 shrink-0 cursor-pointer border-[1.5px]",
+                  color === paletteColor
+                    ? "border-neutral-100 ring-1 ring-neutral-100"
+                    : "border-neutral-700",
+                )}
+                style={{ backgroundColor: hex }}
+                onClick={() => setColor(paletteColor)}
+              />
+              <button
+                type="button"
+                title="Remove from palette"
+                className="absolute -top-1 -right-1 hidden size-3 cursor-pointer items-center justify-center rounded-full bg-neutral-800 text-neutral-300 group-hover:flex hover:bg-neutral-700 hover:text-neutral-100"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removePaletteColor(paletteColor);
+                }}
+              >
+                <XIcon className="size-2" />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
