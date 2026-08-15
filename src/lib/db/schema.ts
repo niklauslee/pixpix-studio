@@ -110,3 +110,24 @@ export const iconSet = sqliteTable("icon_set", {
   createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
 });
+
+// A sprite set saved from the sprite editor (SpriteSet, serialized as JSON —
+// see sprite-editor/sprite.ts), owned by a user and managed from the
+// dashboard. Every sprite in the set shares one box (16-color palette-index
+// pixels, not 1-bit like icon/scene/font), mirrored below as width/height
+// for listing.
+export const spriteSet = sqliteTable("sprite_set", {
+  id: text("id").primaryKey(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  // JSON sprite set data, pako-deflated — see
+  // compressSpriteSetData/decompressSpriteSetData in ./sprite-sets.ts.
+  data: blob("data", { mode: "buffer" }).notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  spriteCount: integer("spriteCount").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
+});

@@ -1,0 +1,35 @@
+---
+import App from "../apps/sprite-editor/app";
+import Head from "../components/astro/head.astro";
+import "../styles/global.css";
+import { getDb } from "@/lib/db";
+import { spriteSet } from "@/lib/db/schema";
+import { decompressSpriteSetData } from "@/lib/db/sprite-sets";
+import { and, eq } from "drizzle-orm";
+
+const user = Astro.locals.user;
+const id = Astro.url.searchParams.get("id");
+
+let initialSpriteSet: { id: string; name: string; data: string } | null =
+  null;
+if (id) {
+  if (!user) return Astro.redirect("/login");
+  const [row] = await getDb()
+    .select({ id: spriteSet.id, name: spriteSet.name, data: spriteSet.data })
+    .from(spriteSet)
+    .where(and(eq(spriteSet.id, id), eq(spriteSet.userId, user.id)));
+  if (!row) return Astro.redirect("/sprite");
+  initialSpriteSet = { ...row, data: decompressSpriteSetData(row.data) };
+}
+---
+
+<html lang="en">
+  <Head title="Empix Sprite Editor" />
+  <body class="dark">
+    <App
+      client:only="react"
+      user={user ? { name: user.name, image: user.image } : null}
+      initialSpriteSet={initialSpriteSet}
+    />
+  </body>
+</html>

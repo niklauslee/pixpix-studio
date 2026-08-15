@@ -1,7 +1,7 @@
-import { ImageIcon, MonitorIcon, TypeIcon } from "lucide-react";
+import { ImageIcon, LayersIcon, MonitorIcon, TypeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DashboardView = "scenes" | "fonts" | "icons";
+export type DashboardView = "scenes" | "fonts" | "icons" | "sprites";
 
 interface SidebarProps {
   active: DashboardView;
@@ -16,6 +16,7 @@ const ITEMS: {
   { id: "scenes", label: "Scenes", icon: MonitorIcon },
   { id: "fonts", label: "Fonts", icon: TypeIcon },
   { id: "icons", label: "Icon Sets", icon: ImageIcon },
+  { id: "sprites", label: "Sprite Sets", icon: LayersIcon },
 ];
 
 export function Sidebar({ active, onChange }: SidebarProps) {
