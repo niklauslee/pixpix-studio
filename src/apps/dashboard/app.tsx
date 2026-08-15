@@ -83,6 +83,16 @@ interface IconSetRow {
   updatedAt: string;
 }
 
+interface SpriteSetRow {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  spriteCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** A blank scene, same defaults as `editor-component.tsx`'s `basicSetup()`. */
 function blankScene() {
   return JSON.stringify({
@@ -97,6 +107,11 @@ function blankScene() {
 /** A blank icon set, same default box as `icon-store.ts`'s `createIconSet()`. */
 function blankIconSet() {
   return JSON.stringify({ box: { w: 16, h: 16 }, icons: [] });
+}
+
+/** A blank sprite set, same default box as `sprite-store.ts`'s `createSpriteSet()`. */
+function blankSpriteSet() {
+  return JSON.stringify({ box: { w: 16, h: 16 }, sprites: [] });
 }
 
 interface DashboardUser {
@@ -128,18 +143,24 @@ function App({ user }: { user: DashboardUser }) {
   const [iconSets, setIconSets] = useState<IconSetRow[] | null>(
     null,
   );
+  const [spriteSets, setSpriteSets] = useState<SpriteSetRow[] | null>(
+    null,
+  );
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<DashboardView>(() => {
     const requested = new URLSearchParams(window.location.search).get(
       "view",
     );
-    return requested === "fonts" || requested === "icons"
+    return requested === "fonts" ||
+      requested === "icons" ||
+      requested === "sprites"
       ? requested
       : "scenes";
   });
   const fileRef = useRef<HTMLInputElement>(null);
   const sceneFileRef = useRef<HTMLInputElement>(null);
   const iconSetFileRef = useRef<HTMLInputElement>(null);
+  const spriteSetFileRef = useRef<HTMLInputElement>(null);
 
   const flash = (message: string) => {
     setNotice(message);
@@ -183,6 +204,17 @@ function App({ user }: { user: DashboardUser }) {
         flash("Failed to load your icon sets");
       });
   }, [view, iconSets]);
+
+  useEffect(() => {
+    if (view !== "sprites" || spriteSets !== null) return;
+    api("/api/sprite-sets")
+      .then((response) => response.json() as Promise<SpriteSetRow[]>)
+      .then(setSpriteSets)
+      .catch((error) => {
+        console.error("Failed to load sprite sets:", error);
+        flash("Failed to load your sprite sets");
+      });
+  }, [view, spriteSets]);
 
   const handleUploadScene = async (file: File) => {
     try {
@@ -443,6 +475,95 @@ function App({ user }: { user: DashboardUser }) {
       download(`${full.name}.eicon`, full.data);
     } catch (error) {
       console.error("Failed to download the icon set:", error);
+      flash("Download failed");
+    }
+  };
+
+  const handleUploadSpriteSet = async (file: File) => {
+    try {
+      const data = await file.text();
+      const parsed = JSON.parse(data);
+      if (!Array.isArray(parsed.sprites) || typeof parsed.box !== "object") {
+        throw new Error("not a sprite set file");
+      }
+      const name = file.name.replace(/\.esprite$/i, "");
+      const response = await api("/api/sprite-sets", {
+        method: "POST",
+        body: JSON.stringify({ name, data }),
+      });
+      const created: SpriteSetRow = await response.json();
+      setSpriteSets((current) => [created, ...(current ?? [])]);
+      flash(`Uploaded ${file.name}`);
+    } catch (error) {
+      console.error("Failed to upload the sprite set:", error);
+      flash("Upload failed — not a valid .esprite file");
+    }
+  };
+
+  const handleCreateSpriteSet = async () => {
+    try {
+      const response = await api("/api/sprite-sets", {
+        method: "POST",
+        body: JSON.stringify({ name: "untitled", data: blankSpriteSet() }),
+      });
+      const created: SpriteSetRow = await response.json();
+      location.href = `/sprite?id=${created.id}`;
+    } catch (error) {
+      console.error("Failed to create the sprite set:", error);
+      flash("Failed to create the sprite set");
+    }
+  };
+
+  const handleRenameSpriteSet = async (id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const previous = spriteSets;
+    setSpriteSets(
+      (current) =>
+        current?.map((p) => (p.id === id ? { ...p, name: trimmed } : p)) ??
+        current,
+    );
+    try {
+      await api(`/api/sprite-sets/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: trimmed }),
+      });
+    } catch (error) {
+      console.error("Failed to rename the sprite set:", error);
+      flash("Rename failed");
+      setSpriteSets(previous);
+    }
+  };
+
+  const handleDeleteSpriteSet = (row: SpriteSetRow) => {
+    useConfirmDialog
+      .getState()
+      .show(
+        "Delete Sprite Set",
+        `Are you sure you want to delete "${row.name}"? This action cannot be undone.`,
+        async () => {
+          const previous = spriteSets;
+          setSpriteSets(
+            (current) => current?.filter((p) => p.id !== row.id) ?? current,
+          );
+          try {
+            await api(`/api/sprite-sets/${row.id}`, { method: "DELETE" });
+          } catch (error) {
+            console.error("Failed to delete the sprite set:", error);
+            flash("Delete failed");
+            setSpriteSets(previous);
+          }
+        },
+      );
+  };
+
+  const handleDownloadSpriteSet = async (row: SpriteSetRow) => {
+    try {
+      const response = await api(`/api/sprite-sets/${row.id}`);
+      const full: SpriteSetRow & { data: string } = await response.json();
+      download(`${full.name}.esprite`, full.data);
+    } catch (error) {
+      console.error("Failed to download the sprite set:", error);
       flash("Download failed");
     }
   };
@@ -799,6 +920,115 @@ function App({ user }: { user: DashboardUser }) {
                   </div>
                 </>
               )}
+
+              {view === "sprites" && (
+                <>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-sm font-medium">Sprite Sets</h1>
+                      {spriteSets && (
+                        <span className="text-xs text-muted-foreground">
+                          {spriteSets.length} set
+                          {spriteSets.length === 1 ? "" : "s"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        title="Start a new sprite set"
+                        onClick={handleCreateSpriteSet}
+                      >
+                        <PlusIcon className="size-3.5" />
+                        New Sprite Set
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        title="Upload an .esprite file"
+                        onClick={() => spriteSetFileRef.current?.click()}
+                      >
+                        <UploadIcon className="size-3.5" />
+                        Upload Sprites
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mb-8 border-[1.5px] border-neutral-800">
+                    <div className="grid grid-cols-[1fr_60px_70px_180px_116px] items-center gap-2 border-b-[1.5px] border-neutral-800 px-4 py-2 text-xs text-muted-foreground">
+                      <div>Name</div>
+                      <div>Sprites</div>
+                      <div>Size</div>
+                      <div>Updated</div>
+                      <div className="text-right">Actions</div>
+                    </div>
+
+                    {spriteSets === null && (
+                      <div className="px-4 py-6 text-center text-xs text-muted-foreground/60">
+                        Loading…
+                      </div>
+                    )}
+
+                    {spriteSets !== null && spriteSets.length === 0 && (
+                      <div className="px-4 py-6 text-center text-xs text-muted-foreground/60">
+                        No sprite sets yet — start one from the sprite editor
+                        and save it to your account.
+                      </div>
+                    )}
+
+                    {spriteSets?.map((row) => (
+                      <div
+                        key={row.id}
+                        className="grid grid-cols-[1fr_60px_70px_180px_116px] items-center gap-2 border-b-[1.5px] border-neutral-800 px-4 py-2 text-xs last:border-b-0"
+                      >
+                        <EditableName
+                          name={row.name}
+                          onSave={(name) => handleRenameSpriteSet(row.id, name)}
+                          onOpen={() => (location.href = `/sprite?id=${row.id}`)}
+                        />
+                        <div className="text-muted-foreground">
+                          {row.spriteCount}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {row.width}x{row.height}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {new Date(row.updatedAt).toLocaleString()}
+                        </div>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Open in Sprite Editor"
+                            onClick={() =>
+                              (location.href = `/sprite?id=${row.id}`)
+                            }
+                          >
+                            <SquarePenIcon className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Download as .esprite"
+                            onClick={() => handleDownloadSpriteSet(row)}
+                          >
+                            <DownloadIcon className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Delete"
+                            onClick={() => handleDeleteSpriteSet(row)}
+                          >
+                            <Trash2Icon className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -813,6 +1043,17 @@ function App({ user }: { user: DashboardUser }) {
           const file = event.target.files?.[0];
           event.target.value = "";
           if (file) handleUploadIconSet(file);
+        }}
+      />
+      <input
+        ref={spriteSetFileRef}
+        type="file"
+        accept=".esprite,application/json"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) handleUploadSpriteSet(file);
         }}
       />
       <input

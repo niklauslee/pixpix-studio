@@ -1,6 +1,7 @@
 # Empix Studio
 
-Three browser-based editors for embedded devices with monochrome displays:
+Four browser-based editors, three for embedded devices with monochrome
+displays plus one general-purpose 16-color sprite editor:
 
 - **Scene editor** (`/scene`) — draws into a packed 1-bpp pixel buffer (like a
   real display framebuffer) and generates
@@ -8,12 +9,16 @@ Three browser-based editors for embedded devices with monochrome displays:
 - **Font editor** (`/font`) — a BDF glyph editor.
 - **Icon editor** (`/icon`) — edits many named icon bitmaps that share one
   fixed size (an icon set) and generates u8g2-ready XBM C byte arrays.
+- **Sprite editor** (`/sprite`) — edits many named sprites that share one
+  fixed size (a sprite set), with a fixed 16-color palette per pixel instead
+  of the 1-bit pixels the other three editors use. No code generation (u8g2
+  is 1bpp-only and has no natural 16-color target).
 
 Editing works anonymously with no account, but nothing persists until you
-sign in: the scene, the font and the icon set all stay in memory only
-(import/export). Signing in with GitHub adds a **dashboard** (`/dashboard`)
-that saves scenes, fonts and icon sets per-user to a Cloudflare D1 database,
-so they can be reopened from any browser.
+sign in: the scene, the font, the icon set and the sprite set all stay in
+memory only (import/export). Signing in with GitHub adds a **dashboard**
+(`/dashboard`) that saves scenes, fonts, icon sets and sprite sets per-user to
+a Cloudflare D1 database, so they can be reopened from any browser.
 
 Astro, server-rendered, + React islands, deployed to Cloudflare Workers
 (`@astrojs/cloudflare`) with a D1 binding — not a static-assets-only site.
@@ -61,16 +66,19 @@ src/
     scene.astro     scene editor; ?id= loads a saved scene (auth-required only then)
     font.astro      font editor; ?id= loads a saved font (auth-required only then)
     icon.astro      icon editor; ?id= loads a saved icon set (auth-required only then)
+    sprite.astro    sprite editor; ?id= loads a saved sprite set (auth-required only then)
     api/
       auth/[...all].ts    better-auth catch-all handler
-      scenes/index.ts, scenes/[id].ts       CRUD for the signed-in user's scenes
-      fonts/index.ts, fonts/[id].ts         CRUD for the signed-in user's fonts
-      icon-sets/index.ts, icon-sets/[id].ts CRUD for the signed-in user's icon sets
+      scenes/index.ts, scenes/[id].ts             CRUD for the signed-in user's scenes
+      fonts/index.ts, fonts/[id].ts               CRUD for the signed-in user's fonts
+      icon-sets/index.ts, icon-sets/[id].ts       CRUD for the signed-in user's icon sets
+      sprite-sets/index.ts, sprite-sets/[id].ts   CRUD for the signed-in user's sprite sets
   apps/
     scene-editor/  the u8g2 scene editor app (AppContext, engine, UI, commands)
     font-editor/    the BDF glyph editor app (self-contained)
     icon-editor/    the icon set editor app (self-contained)
-    dashboard/      lists/manages a signed-in user's saved scenes, fonts and icon sets
+    sprite-editor/  the sprite set editor app (self-contained, 16-color pixels)
+    dashboard/      lists/manages a signed-in user's saved scenes, fonts, icon sets and sprite sets
   components/
     editor/         reusable editor core — canvas, shapes, tools, undo/redo
     ui/             shadcn components
@@ -81,7 +89,7 @@ src/
     utils.ts        cn, detectPlatform, generateNewName, odd
     auth.ts         getAuth() — lazy better-auth singleton (GitHub OAuth + D1)
     auth-client.ts  authClient — better-auth browser client (signIn/signOut)
-    db/             schema.ts (Drizzle), index.ts (getDb()), fonts.ts, scenes.ts, icon-sets.ts
+    db/             schema.ts (Drizzle), index.ts (getDb()), fonts.ts, scenes.ts, icon-sets.ts, sprite-sets.ts
   middleware.ts     resolves the session on every request into Astro.locals
   font-data.ts      generated — embedded BDF fonts (deflate + base64)
   styles/           global.css (Tailwind v4 + theme), fonts.css (@font-face)
@@ -91,16 +99,18 @@ All pages render their app's `<App client:only="react" />` inside
 `<body class="dark">` (there is no light theme) with the shared
 `components/astro/head.astro`, which takes an optional `title` and includes
 the Google Analytics tag. `scene.astro`/`font.astro`/`icon.astro`/
-`dashboard.astro` share `components/appbar.tsx` for their header (logo,
-current-page label, a "Dashboard" back-link, and app-specific actions on the
-right).
+`sprite.astro`/`dashboard.astro` share `components/appbar.tsx` for their
+header (logo, current-page label, a "Dashboard" back-link, and app-specific
+actions on the right).
 
 The apps share `components/editor/`, `ui/`, `icons/`, `dialogs/`, `logo.tsx`,
 `appbar.tsx`, `lib/utils.ts` and `font-data.ts` — nothing else. In particular
-the font editor and the icon editor don't touch the editor core, `AppContext`
-or the engine, and the icon editor doesn't share code with the font editor
-either (`icon-editor/draw.ts` is a deliberate near-duplicate of
-`font-editor/draw.ts`, not an import — the two apps stay independent).
+the font editor, the icon editor and the sprite editor don't touch the editor
+core, `AppContext` or the engine, and none of the three share code with each
+other (`icon-editor/draw.ts` is a deliberate near-duplicate of
+`font-editor/draw.ts`, and `sprite-editor/draw.ts` a further near-duplicate
+adapted for palette-index pixels instead of booleans — none are imports, all
+three apps stay independent).
 
 ## Scene editor
 
@@ -275,6 +285,47 @@ a single `keydown` listener in `app.tsx`, same as the font editor.
   (`IconCodeDialog` / `showIconCodeDialog`) picks the language, PROGMEM, and
   whether to export all icons or just the selected one.
 
+## Sprite editor (`src/apps/sprite-editor/`)
+
+A self-contained sprite set editor at `/sprite`, modeled closely on the icon
+editor: one fixed `Box` shared by every sprite in the set, sprites keyed by
+name. The one structural difference from every other editor in the app: each
+pixel is a **palette index (0-15)**, not a boolean — `palette.ts` exports the
+fixed `PALETTE` (the classic 16-color CGA/EGA palette) every sprite set
+shares, and index 0 is a real opaque color (black), not transparency. No
+editor core, no `AppContext`, no engine, no command manager, and **no code
+generation** — u8g2 is 1bpp-only and has no natural 16-color target, so
+unlike the other three editors there's no Code button/dialog here.
+
+- `palette.ts` — the fixed 16-color `PALETTE` (hex strings).
+- `sprite.ts` — the `SpriteSet` / `Sprite` / `Box` model: `createSpriteSet`,
+  `createSprite`, `findSprite`, `uniqueName`, `remapPixels` / `resizeBox`
+  (top-left anchored, same shape as the icon editor's), `serializeSpriteSet`
+  / `parseSpriteSet`. `packPixels`/`unpackPixels` nibble-pack 2 pixels/byte
+  (not 1 bit/pixel like `icon-editor/icon.ts`, since values are 0-15).
+- `draw.ts` — pixel operations (pen, eraser, line, rect, flood fill, shift,
+  flip, clear) and the `Tool` union, operating on `number[]` (palette
+  indices) + `Box` instead of `boolean[]`. No `invert` — not meaningful
+  across 16 colors. A near-duplicate of `icon-editor/draw.ts`, not a shared
+  import (see above).
+- `sprite-store.ts` — zustand store: the `SpriteSet`, selected sprite name,
+  tool, **selected draw `color` (0-15)**, cell size, guides, filter, hover
+  cell, and an undo stack of bitmap patches keyed by sprite name (structural
+  edits — add/remove sprite, box resize — clear it). Like the icon set, not
+  persisted locally: starts as a blank 16×16 set, kept in memory only. Only
+  cell-size (zoom) lives in `localStorage` (`sprite-editor-cell-size`).
+- `render.ts` — `setupCanvas` plus `drawSprite`, which paints each pixel with
+  its own `PALETTE[color]` (unlike the icon editor's `drawIcon`, which uses
+  one caller-supplied fill color for every "on" pixel).
+- `app.tsx` — layout (appbar / sprite list / grid + toolbar / properties /
+  status bar), keyboard shortcuts (same as the icon editor's, minus the
+  invert shortcut). When opened via `/sprite?id=`, `initialSpriteSet.data` is
+  parsed with `parseSpriteSet()` into the store on mount. Same Save / "Sign
+  in to Save" pattern as the other editors (`POST`/`PATCH`
+  `/api/sprite-sets`); with `sprite-list.tsx`, `sprite-canvas.tsx`,
+  `toolbar.tsx` (its third row is the 16-swatch palette picker that sets
+  `sprite-store.ts`'s `color`), `properties.tsx`.
+
 ## Dashboard, auth & cloud persistence
 
 - **Auth**: `src/lib/auth.ts` — `getAuth()`, a lazily-constructed `betterAuth()`
@@ -292,41 +343,47 @@ a single `keydown` listener in `app.tsx`, same as the font editor.
 - **Database**: `src/lib/db/schema.ts` (Drizzle, SQLite dialect, D1 binding
   `DB`) has better-auth's core tables (`user`, `session`, `account`,
   `verification` — hand-written, not generated, because generation needs
-  `better-auth`'s config which pulls in `cloudflare:workers`) plus three app
+  `better-auth`'s config which pulls in `cloudflare:workers`) plus four app
   tables: `scene` (`data` = `Editor#saveToJSON` output, `width`/`height`/
   `shapeCount` mirrored for listing), `font` (`data` = raw BDF text,
-  `glyphCount` mirrored), and `iconSet` — SQL table name `icon_set`, the one
+  `glyphCount` mirrored), `iconSet` — SQL table name `icon_set`, the one
   place a table's SQL name and its Drizzle export diverge, since `icon_set`
   is the conventional snake_case SQLite name while every other identifier in
   the codebase stays camelCase (`data` = `IconSet` JSON, `width`/`height`/
-  `iconCount` mirrored). All three are `userId`-scoped with
-  `onDelete: "cascade"`. `src/lib/db/index.ts` — `getDb()`, same
-  lazy-singleton pattern as `getAuth()`. `db/fonts.ts` (`countGlyphs`),
-  `db/scenes.ts` (`parseSceneData`) and `db/icon-sets.ts`
-  (`parseIconSetData`) derive the mirrored metadata without importing the
-  editor/font-editor/icon-editor code.
+  `iconCount` mirrored) — and `spriteSet` — SQL table name `sprite_set`,
+  created directly with that name rather than diverging after the fact like
+  `iconSet` did (`data` = `SpriteSet` JSON, `width`/`height`/`spriteCount`
+  mirrored). All four are `userId`-scoped with `onDelete: "cascade"`.
+  `src/lib/db/index.ts` — `getDb()`, same lazy-singleton pattern as
+  `getAuth()`. `db/fonts.ts` (`countGlyphs`), `db/scenes.ts`
+  (`parseSceneData`), `db/icon-sets.ts` (`parseIconSetData`) and
+  `db/sprite-sets.ts` (`parseSpriteSetData`) derive the mirrored metadata
+  without importing the editor/font-editor/icon-editor/sprite-editor code.
 - **API routes** (`src/pages/api/`): `scenes/index.ts` (`GET` list metadata
   only, `POST` create) and `scenes/[id].ts` (`GET`/`PATCH`/`DELETE`), mirrored
-  by `fonts/index.ts` / `fonts/[id].ts` and `icon-sets/index.ts` /
-  `icon-sets/[id].ts`. Every query is scoped with `eq(<table>.userId,
-user.id)`, so another user's row 404s rather than 403s. `auth/[...all].ts`
-  just forwards to `getAuth().handler(request)`.
+  by `fonts/index.ts` / `fonts/[id].ts`, `icon-sets/index.ts` /
+  `icon-sets/[id].ts` and `sprite-sets/index.ts` / `sprite-sets/[id].ts`.
+  Every query is scoped with `eq(<table>.userId, user.id)`, so another user's
+  row 404s rather than 403s. `auth/[...all].ts` just forwards to
+  `getAuth().handler(request)`.
 - **Dashboard app** (`src/apps/dashboard/`, route `/dashboard`, redirects to
-  `/login` if signed out): `app.tsx` fetches `/api/scenes`, `/api/fonts` and
-  `/api/icon-sets` on mount and renders a three-tab (Scenes/Fonts/Icon Sets)
-  table via `sidebar.tsx` — create, inline rename (optimistic, rolls back on
-  failure), delete (via the shared `ConfirmDialog`), download (blobs the full
-  row to `.empix`/`.bdf`/`.eicon`), and upload. "New Scene" / "New Font" /
-  "New Icon Set" create a blank row then navigate to `/scene?id=…` /
-  `/font?id=…` / `/icon?id=…` (icon sets default to a blank 16×16 box, no
-  creation-time dialog). `new-font-dialog.tsx` + `charsets.ts` pick Unicode
-  glyph ranges (optionally pre-filled from the embedded 6x13 font) when
-  creating a font.
-- `scene.astro` / `font.astro` / `icon.astro` stay usable **anonymously** —
-  auth is only enforced when the URL carries `?id=`: signed out → redirect to
-  `/login`; signed in but the row doesn't belong to you → redirect back to
-  the id-less URL. When it resolves, the row is fetched server-side via
-  Drizzle and passed as `initialScene`/`initialFont`/`initialIconSet` (plus
+  `/login` if signed out): `app.tsx` fetches `/api/scenes`, `/api/fonts`,
+  `/api/icon-sets` and `/api/sprite-sets` on mount and renders a four-tab
+  (Scenes/Fonts/Icon Sets/Sprite Sets) table via `sidebar.tsx` — create,
+  inline rename (optimistic, rolls back on failure), delete (via the shared
+  `ConfirmDialog`), download (blobs the full row to
+  `.empix`/`.bdf`/`.eicon`/`.esprite`), and upload. "New Scene" / "New Font" /
+  "New Icon Set" / "New Sprite Set" create a blank row then navigate to
+  `/scene?id=…` / `/font?id=…` / `/icon?id=…` / `/sprite?id=…` (icon sets and
+  sprite sets both default to a blank 16×16 box, no creation-time dialog).
+  `new-font-dialog.tsx` + `charsets.ts` pick Unicode glyph ranges (optionally
+  pre-filled from the embedded 6x13 font) when creating a font.
+- `scene.astro` / `font.astro` / `icon.astro` / `sprite.astro` stay usable
+  **anonymously** — auth is only enforced when the URL carries `?id=`: signed
+  out → redirect to `/login`; signed in but the row doesn't belong to you →
+  redirect back to the id-less URL. When it resolves, the row is fetched
+  server-side via Drizzle and passed as
+  `initialScene`/`initialFont`/`initialIconSet`/`initialSpriteSet` (plus
   `user: {name, image} | null`) props to the React app.
 
 ## Fonts
@@ -360,8 +417,9 @@ Two unrelated font pipelines:
   `window.app.commands.execute(id)`.
 - Code shared across apps belongs in `src/components/` or `src/lib/`;
   app-specific code stays under its `src/apps/<app>/` directory. The font
-  editor and icon editor deliberately don't share code with each other even
-  though they're structurally similar — see the note above `draw.ts`.
+  editor, icon editor and sprite editor deliberately don't share code with
+  each other even though they're structurally similar — see the note above
+  `draw.ts`.
 - Import alias `@/*` → `src/*`. TypeScript is `astro/tsconfigs/strict`.
 - Debugging: `window.app` (app context) and `window.editor` (editor instance) —
   scene editor only.

@@ -3,12 +3,13 @@ import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 /** Which page is currently open — shown as a label, not a link. */
-export type AppbarApp = "scene" | "font" | "icon" | "dashboard";
+export type AppbarApp = "scene" | "font" | "icon" | "sprite" | "dashboard";
 
 const APP_LABELS: Record<AppbarApp, string> = {
   scene: "Scene",
   font: "Font",
   icon: "Icon",
+  sprite: "Sprite",
   dashboard: "Dashboard",
 };
 
@@ -17,6 +18,7 @@ const DASHBOARD_VIEW: Partial<Record<AppbarApp, string>> = {
   scene: "scenes",
   font: "fonts",
   icon: "icons",
+  sprite: "sprites",
 };
 
 interface AppbarProps extends React.HTMLAttributes<HTMLDivElement> {
