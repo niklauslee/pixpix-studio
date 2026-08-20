@@ -1,8 +1,6 @@
-![Logo](https://github.com/niklauslee/pixpix-studio/blob/main/public/images/logo.png?raw=true)
-
 # Pixpix Studio
 
-👉 https://pixpix.niklauslee.workers.dev/
+👉 https://pixpix-studio.niklauslee.workers.dev/
 
 Three super-simple editors for embedded devices with monochrome displays.
 
