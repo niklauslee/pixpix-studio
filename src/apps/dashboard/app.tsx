@@ -140,17 +140,11 @@ async function api(path: string, init?: RequestInit) {
 function App({ user }: { user: DashboardUser }) {
   const [scenes, setScenes] = useState<SceneRow[] | null>(null);
   const [fonts, setFonts] = useState<FontRow[] | null>(null);
-  const [iconSets, setIconSets] = useState<IconSetRow[] | null>(
-    null,
-  );
-  const [spriteSets, setSpriteSets] = useState<SpriteSetRow[] | null>(
-    null,
-  );
+  const [iconSets, setIconSets] = useState<IconSetRow[] | null>(null);
+  const [spriteSets, setSpriteSets] = useState<SpriteSetRow[] | null>(null);
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<DashboardView>(() => {
-    const requested = new URLSearchParams(window.location.search).get(
-      "view",
-    );
+    const requested = new URLSearchParams(window.location.search).get("view");
     return requested === "fonts" ||
       requested === "icons" ||
       requested === "sprites"
@@ -221,7 +215,7 @@ function App({ user }: { user: DashboardUser }) {
       const data = await file.text();
       const parsed = JSON.parse(data);
       if (!Array.isArray(parsed.shapes)) throw new Error("not a scene file");
-      const name = file.name.replace(/\.empix$/i, "");
+      const name = file.name.replace(/\.pixpix$/i, "");
       const response = await api("/api/scenes", {
         method: "POST",
         body: JSON.stringify({ name, data }),
@@ -231,7 +225,7 @@ function App({ user }: { user: DashboardUser }) {
       flash(`Uploaded ${file.name}`);
     } catch (error) {
       console.error("Failed to upload the scene:", error);
-      flash("Upload failed — not a valid .empix file");
+      flash("Upload failed — not a valid .pixpix file");
     }
   };
 
@@ -296,7 +290,7 @@ function App({ user }: { user: DashboardUser }) {
     try {
       const response = await api(`/api/scenes/${row.id}`);
       const full: SceneRow & { data: string } = await response.json();
-      download(`${full.name}.empix`, full.data);
+      download(`${full.name}.pixpix`, full.data);
     } catch (error) {
       console.error("Failed to download the scene:", error);
       flash("Download failed");
@@ -624,7 +618,7 @@ function App({ user }: { user: DashboardUser }) {
                       <Button
                         variant="outline"
                         size="sm"
-                        title="Upload an .empix file"
+                        title="Upload an .pixpix file"
                         onClick={() => sceneFileRef.current?.click()}
                       >
                         <UploadIcon className="size-3.5" />
@@ -688,7 +682,7 @@ function App({ user }: { user: DashboardUser }) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            title="Download as .empix"
+                            title="Download as .pixpix"
                             onClick={() => handleDownloadScene(row)}
                           >
                             <DownloadIcon className="size-3.5" />
@@ -863,8 +857,8 @@ function App({ user }: { user: DashboardUser }) {
 
                     {iconSets !== null && iconSets.length === 0 && (
                       <div className="px-4 py-6 text-center text-xs text-muted-foreground/60">
-                        No icon sets yet — start one from the icon editor
-                        and save it to your account.
+                        No icon sets yet — start one from the icon editor and
+                        save it to your account.
                       </div>
                     )}
 
@@ -985,7 +979,9 @@ function App({ user }: { user: DashboardUser }) {
                         <EditableName
                           name={row.name}
                           onSave={(name) => handleRenameSpriteSet(row.id, name)}
-                          onOpen={() => (location.href = `/sprite?id=${row.id}`)}
+                          onOpen={() =>
+                            (location.href = `/sprite?id=${row.id}`)
+                          }
                         />
                         <div className="text-muted-foreground">
                           {row.spriteCount}
@@ -1059,7 +1055,7 @@ function App({ user }: { user: DashboardUser }) {
       <input
         ref={sceneFileRef}
         type="file"
-        accept=".empix,application/json"
+        accept=".pixpix,application/json"
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];

@@ -13,7 +13,14 @@
  * size-optimal as the original tools.
  */
 
-import { findGlyph, getPixel, tightBox, type Box, type Font, type Glyph } from "./bdf";
+import {
+  findGlyph,
+  getPixel,
+  tightBox,
+  type Box,
+  type Font,
+  type Glyph,
+} from "./bdf";
 
 export interface GeneratedCode {
   code: string;
@@ -45,7 +52,12 @@ function hex(value: number): string {
 function chunkedHex(bytes: number[], perLine = 16): string[] {
   const lines: string[] = [];
   for (let i = 0; i < bytes.length; i += perLine) {
-    lines.push(bytes.slice(i, i + perLine).map(hex).join(", ") + ",");
+    lines.push(
+      bytes
+        .slice(i, i + perLine)
+        .map(hex)
+        .join(", ") + ",",
+    );
   }
   return lines;
 }
@@ -66,17 +78,38 @@ interface GlyphBox {
 function toGlyphBox(box: Box, glyph: Glyph): GlyphBox {
   const tight = tightBox(box, glyph.pixels);
   if (!tight) {
-    return { code: glyph.code, width: 0, height: 0, ox: 0, oy: 0, dwidth: glyph.dwidth, bits: [] };
+    return {
+      code: glyph.code,
+      width: 0,
+      height: 0,
+      ox: 0,
+      oy: 0,
+      dwidth: glyph.dwidth,
+      bits: [],
+    };
   }
   const bits: boolean[] = new Array(tight.w * tight.h);
   const startCol = tight.ox - box.ox;
   const startRow = box.oy + box.h - 1 - (tight.oy + tight.h - 1);
   for (let row = 0; row < tight.h; row++) {
     for (let col = 0; col < tight.w; col++) {
-      bits[row * tight.w + col] = getPixel(box, glyph.pixels, startCol + col, startRow + row);
+      bits[row * tight.w + col] = getPixel(
+        box,
+        glyph.pixels,
+        startCol + col,
+        startRow + row,
+      );
     }
   }
-  return { code: glyph.code, width: tight.w, height: tight.h, ox: tight.ox, oy: tight.oy, dwidth: glyph.dwidth, bits };
+  return {
+    code: glyph.code,
+    width: tight.w,
+    height: tight.h,
+    ox: tight.ox,
+    oy: tight.oy,
+    dwidth: glyph.dwidth,
+    bits,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -160,7 +193,8 @@ function maxRunLength(glyphs: GlyphBox[], parity: 0 | 1): number {
   for (const g of glyphs) {
     if (g.width === 0) continue;
     const runs = computeRuns(g.bits);
-    for (let i = parity; i < runs.length; i += 2) if (runs[i] > max) max = runs[i];
+    for (let i = parity; i < runs.length; i += 2)
+      if (runs[i] > max) max = runs[i];
   }
   return max;
 }
@@ -247,13 +281,19 @@ function encodeU8g2Glyph(g: GlyphBox, widths: U8g2Widths): number[] {
 }
 
 /** `[encoding][entrySize][data...]`, terminated by a `[0, 0]` sentinel. */
-function buildAsciiSegment(glyphs: GlyphBox[], widths: U8g2Widths, warnings: string[]): number[] {
+function buildAsciiSegment(
+  glyphs: GlyphBox[],
+  widths: U8g2Widths,
+  warnings: string[],
+): number[] {
   const bytes: number[] = [];
   for (const g of glyphs) {
     const data = encodeU8g2Glyph(g, widths);
     const size = 2 + data.length;
     if (size > 255) {
-      warnings.push(`Glyph U+${g.code.toString(16)} is too large to encode for u8g2 (${size} bytes) — skipped.`);
+      warnings.push(
+        `Glyph U+${g.code.toString(16)} is too large to encode for u8g2 (${size} bytes) — skipped.`,
+      );
       continue;
     }
     bytes.push(toByte(g.code), size, ...data);
@@ -263,7 +303,11 @@ function buildAsciiSegment(glyphs: GlyphBox[], widths: U8g2Widths, warnings: str
 }
 
 /** A single jump-table block covering every codepoint above 0xFF. */
-function buildUnicodeSegment(glyphs: GlyphBox[], widths: U8g2Widths, warnings: string[]): number[] {
+function buildUnicodeSegment(
+  glyphs: GlyphBox[],
+  widths: U8g2Widths,
+  warnings: string[],
+): number[] {
   const entries: number[] = [];
   let maxEncoding = 0xffff;
   if (glyphs.length > 0) {
@@ -272,7 +316,9 @@ function buildUnicodeSegment(glyphs: GlyphBox[], widths: U8g2Widths, warnings: s
       const data = encodeU8g2Glyph(g, widths);
       const size = 3 + data.length;
       if (size > 255) {
-        warnings.push(`Glyph U+${g.code.toString(16)} is too large to encode for u8g2 (${size} bytes) — skipped.`);
+        warnings.push(
+          `Glyph U+${g.code.toString(16)} is too large to encode for u8g2 (${size} bytes) — skipped.`,
+        );
         continue;
       }
       entries.push((g.code >> 8) & 0xff, g.code & 0xff, size, ...data);
@@ -283,7 +329,10 @@ function buildUnicodeSegment(glyphs: GlyphBox[], widths: U8g2Widths, warnings: s
   return [...header, ...entries];
 }
 
-export function generateU8g2Font(font: Font, identifier: string): GeneratedCode {
+export function generateU8g2Font(
+  font: Font,
+  identifier: string,
+): GeneratedCode {
   const warnings: string[] = [];
   const dropped = font.glyphs.filter((g) => g.code > 0xffff);
   if (dropped.length > 0) {
@@ -353,10 +402,16 @@ export function generateU8g2Font(font: Font, identifier: string): GeneratedCode 
   header[21] = (startUnicode >> 8) & 0xff;
   header[22] = startUnicode & 0xff;
 
-  const bytes = [...header, ...belowBytes, ...upperBytes, ...lowerBytes, ...unicodeBytes];
+  const bytes = [
+    ...header,
+    ...belowBytes,
+    ...upperBytes,
+    ...lowerBytes,
+    ...unicodeBytes,
+  ];
 
   const lines = [
-    `// u8g2 font generated by Empix Font Editor from "${font.name}"`,
+    `// u8g2 font generated by Pixpix Font Editor from "${font.name}"`,
     `// ${glyphs.length} glyphs, ${bytes.length} bytes`,
     "//",
     `// Usage:`,
@@ -425,7 +480,10 @@ export function generateAdafruitGfxFont(
     );
   }
   if (codes.length === 0) {
-    return { code: "// No glyphs to export.", warnings: ["Font has no glyphs."] };
+    return {
+      code: "// No glyphs to export.",
+      warnings: ["Font has no glyphs."],
+    };
   }
 
   const first = Math.min(...codes);
@@ -449,17 +507,41 @@ export function generateAdafruitGfxFont(
     const glyph = findGlyph(font, code);
     const offset = bitmap.length;
     if (!glyph) {
-      entries.push({ code, offset, width: 0, height: 0, xAdvance: 0, xOffset: 0, yOffset: 0 });
+      entries.push({
+        code,
+        offset,
+        width: 0,
+        height: 0,
+        xAdvance: 0,
+        xOffset: 0,
+        yOffset: 0,
+      });
       continue;
     }
     const g = toGlyphBox(font.box, glyph);
     if (g.width === 0 || g.height === 0) {
-      entries.push({ code, offset, width: 0, height: 0, xAdvance: g.dwidth, xOffset: 0, yOffset: 0 });
+      entries.push({
+        code,
+        offset,
+        width: 0,
+        height: 0,
+        xAdvance: g.dwidth,
+        xOffset: 0,
+        yOffset: 0,
+      });
       continue;
     }
     if (g.width > 255 || g.height > 255) {
       oversized++;
-      entries.push({ code, offset, width: 0, height: 0, xAdvance: g.dwidth, xOffset: 0, yOffset: 0 });
+      entries.push({
+        code,
+        offset,
+        width: 0,
+        height: 0,
+        xAdvance: g.dwidth,
+        xOffset: 0,
+        yOffset: 0,
+      });
       continue;
     }
     const bw = new MsbBitWriter();
@@ -477,17 +559,21 @@ export function generateAdafruitGfxFont(
   }
 
   if (oversized > 0) {
-    warnings.push(`${oversized} glyph(s) exceed Adafruit GFX's 255x255 per-glyph size limit and were omitted.`);
+    warnings.push(
+      `${oversized} glyph(s) exceed Adafruit GFX's 255x255 per-glyph size limit and were omitted.`,
+    );
   }
   if (bitmap.length > 0xffff) {
-    warnings.push("Bitmap data exceeds 64KB — GFXglyph's 16-bit bitmapOffset will overflow. Trim the glyph set.");
+    warnings.push(
+      "Bitmap data exceeds 64KB — GFXglyph's 16-bit bitmapOffset will overflow. Trim the glyph set.",
+    );
   }
 
   const yAdvance = Math.max(1, font.ascent + font.descent);
   const progmem = useProgmem ? " PROGMEM" : "";
 
   const lines = [
-    `// Adafruit GFX font generated by Empix Font Editor from "${font.name}"`,
+    `// Adafruit GFX font generated by Pixpix Font Editor from "${font.name}"`,
     `// ${entries.length} glyphs (U+${first.toString(16)}–U+${last.toString(16)}), ${bitmap.length} bitmap bytes`,
     "//",
     "// Usage:",
@@ -499,7 +585,10 @@ export function generateAdafruitGfxFont(
     "",
     `const GFXglyph ${identifier}Glyphs[]${progmem} = {`,
     ...entries.map((e) => {
-      const label = e.code >= 0x20 && e.code < 0x7f ? ` // '${String.fromCharCode(e.code)}'` : ` // U+${e.code.toString(16).padStart(4, "0")}`;
+      const label =
+        e.code >= 0x20 && e.code < 0x7f
+          ? ` // '${String.fromCharCode(e.code)}'`
+          : ` // U+${e.code.toString(16).padStart(4, "0")}`;
       return `  { ${e.offset}, ${e.width}, ${e.height}, ${e.xAdvance}, ${e.xOffset}, ${e.yOffset} },${label}`;
     }),
     "};",

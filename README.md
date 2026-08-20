@@ -1,14 +1,14 @@
-![Logo](https://github.com/niklauslee/empix/blob/main/public/images/logo.png?raw=true)
+![Logo](https://github.com/niklauslee/pixpix-studio/blob/main/public/images/logo.png?raw=true)
 
-# Empix Studio
+# Pixpix Studio
 
-👉 https://empix.niklauslee.workers.dev/
+👉 https://pixpix.niklauslee.workers.dev/
 
 Three super-simple editors for embedded devices with monochrome displays.
 
 ## Scene editor
 
-![Scene Editor](https://github.com/niklauslee/empix/blob/main/public/images/scene-editor.png?raw=true)
+![Scene Editor](https://github.com/niklauslee/pixpix-studio/blob/main/public/images/scene-editor.png?raw=true)
 
 Draws a scene into a packed 1-bpp pixel buffer, like a real display
 framebuffer.
@@ -19,7 +19,7 @@ framebuffer.
 
 ## Font editor
 
-![Font Editor](https://github.com/niklauslee/empix/blob/main/public/images/font-editor.png?raw=true)
+![Font Editor](https://github.com/niklauslee/pixpix-studio/blob/main/public/images/font-editor.png?raw=true)
 
 A BDF glyph editor for creating and editing bitmap fonts.
 
@@ -29,7 +29,7 @@ A BDF glyph editor for creating and editing bitmap fonts.
 
 ## Icon editor
 
-![Icon Editor](https://github.com/niklauslee/empix/blob/main/public/images/icon-editor.png?raw=true)
+![Icon Editor](https://github.com/niklauslee/pixpix-studio/blob/main/public/images/icon-editor.png?raw=true)
 
 An editor for icon sets — many named icon bitmaps sharing one fixed size.
 
@@ -50,8 +50,8 @@ manage them from one place.
 
 ```sh
 # clone repository
-$ git clone https://github.com/niklauslee/empix.git
-$ cd empix
+$ git clone https://github.com/niklauslee/pixpix-studio.git
+$ cd pixpix-studio
 
 # install all dependencies
 $ npm install
@@ -71,7 +71,7 @@ Cloudflare account:
 
 ```sh
 # create the remote D1 database
-$ npx wrangler d1 create empix
+$ npx wrangler d1 create pixpix-studio
 ```
 
 Copy the `database_id` printed by that command into the `d1_databases` entry
@@ -105,4 +105,4 @@ Please note that this project is **not open contribution**, so we do not accept 
 
 ## License
 
-Empix Studio is distributed under the _Apache License 2.0_. See the [LICENSE](./LICENSE.md) file for more details.
+Pixpix Studio is distributed under the _Apache License 2.0_. See the [LICENSE](./LICENSE.md) file for more details.

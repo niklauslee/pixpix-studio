@@ -72,8 +72,8 @@ function App({
 
   useEffect(() => {
     document.title = savedName
-      ? `Empix Scene Editor — ${savedName}`
-      : "Empix Scene Editor";
+      ? `Pixpix Scene Editor — ${savedName}`
+      : "Pixpix Scene Editor";
   }, [savedName]);
 
   const handleMount = async (editor: Editor) => {

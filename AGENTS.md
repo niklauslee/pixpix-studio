@@ -1,4 +1,4 @@
-# Empix Studio
+# Pixpix Studio
 
 Four browser-based editors, three for embedded devices with monochrome
 displays plus one general-purpose RGB sprite editor:
@@ -191,7 +191,7 @@ signed in. Anonymous edits aren't persisted anywhere and are lost on reload
 - `app.tsx` — composes `layout.tsx` (appbar / left sidebar / right sidebar /
   content) with `LayersPanel`, `Toolbar`, `PropertiesPanel`, `EditorComponent`
   and the dialogs. Uses the shared `components/appbar.tsx` for Clear, Code,
-  Import / Export of `.empix` files (JSON via the File System Access API —
+  Import / Export of `.pixpix` files (JSON via the File System Access API —
   Chromium only, marked `FIXME`) and the Save / "Sign in to Save" cloud-save
   action (see above).
 - `store/editor-store.ts` — read-only mirror of editor state for React
@@ -384,7 +384,7 @@ editors there's no Code button/dialog here.
   (Scenes/Fonts/Icon Sets/Sprite Sets) table via `sidebar.tsx` — create,
   inline rename (optimistic, rolls back on failure), delete (via the shared
   `ConfirmDialog`), download (blobs the full row to
-  `.empix`/`.bdf`/`.eicon`/`.esprite`), and upload. "New Scene" / "New Font" /
+  `.pixpix`/`.bdf`/`.eicon`/`.esprite`), and upload. "New Scene" / "New Font" /
   "New Icon Set" / "New Sprite Set" create a blank row then navigate to
   `/scene?id=…` / `/font?id=…` / `/icon?id=…` / `/sprite?id=…` (icon sets and
   sprite sets both default to a blank 16×16 box, no creation-time dialog).
@@ -442,10 +442,10 @@ Server-rendered: `astro.config.mjs` sets `output: "server"` with the
 `@astrojs/cloudflare` adapter, so `astro build` emits a Worker (not just
 static assets). `wrangler.jsonc` sets `main` to the adapter's server
 entrypoint, an `assets` binding for `./dist`, and a `d1_databases` binding
-(`DB`, database `empix`, migrations in `drizzle/migrations`). Secrets
+(`DB`, database `pixpix`, migrations in `drizzle/migrations`). Secrets
 (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `BETTER_AUTH_SECRET`) come from
 `.dev.vars` locally and Worker secrets in production. Live at
-<https://empix.niklauslee.workers.dev/>
+<https://pixpix-studio.niklauslee.workers.dev/>
 
 ## Documentation
 

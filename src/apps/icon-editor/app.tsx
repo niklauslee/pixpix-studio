@@ -115,8 +115,8 @@ function App({
 
   useEffect(() => {
     document.title = savedName
-      ? `Empix Icon Editor — ${savedName}`
-      : "Empix Icon Editor";
+      ? `Pixpix Icon Editor — ${savedName}`
+      : "Pixpix Icon Editor";
   }, [savedName]);
 
   const handleSave = async () => {

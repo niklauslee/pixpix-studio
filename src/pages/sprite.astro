@@ -10,8 +10,7 @@ import { and, eq } from "drizzle-orm";
 const user = Astro.locals.user;
 const id = Astro.url.searchParams.get("id");
 
-let initialSpriteSet: { id: string; name: string; data: string } | null =
-  null;
+let initialSpriteSet: { id: string; name: string; data: string } | null = null;
 if (id) {
   if (!user) return Astro.redirect("/login");
   const [row] = await getDb()
@@ -24,7 +23,7 @@ if (id) {
 ---
 
 <html lang="en">
-  <Head title="Empix Sprite Editor" />
+  <Head title="Pixpix Sprite Editor" />
   <body class="dark">
     <App
       client:only="react"

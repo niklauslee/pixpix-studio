@@ -116,8 +116,8 @@ function App({
 
   useEffect(() => {
     document.title = savedName
-      ? `Empix Font Editor — ${savedName}`
-      : "Empix Font Editor";
+      ? `Pixpix Font Editor — ${savedName}`
+      : "Pixpix Font Editor";
   }, [savedName]);
 
   const handleSave = async () => {
@@ -173,7 +173,8 @@ function App({
 
       if (mod && event.key.toLowerCase() === "s") {
         event.preventDefault();
-        if (user && store.font !== savedFontRef.current) handleSaveRef.current();
+        if (user && store.font !== savedFontRef.current)
+          handleSaveRef.current();
         return;
       }
       if (mod && event.key.toLowerCase() === "z") {

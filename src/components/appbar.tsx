@@ -47,8 +47,7 @@ export function Appbar({
     >
       <div className="flex items-center justify-start gap-6 px-4">
         <div className="text-xl flex flex-row items-start justify-center gap-1">
-          <Logo size={1.5} className="text-green-600" />
-          <div className="text-xl ml-3">studio</div>
+          <div className="text-xl ml-3">Pixpix studio</div>
         </div>
         <div className="text-sm text-muted-foreground">
           {APP_LABELS[active]}
@@ -67,7 +66,7 @@ export function Appbar({
       <div className="flex items-center justify-end gap-2 px-4">
         {children}
         <a
-          href="https://github.com/niklauslee/empix"
+          href="https://github.com/niklauslee/pixpix-studio"
           target="_blank"
           rel="noopener noreferrer"
         >

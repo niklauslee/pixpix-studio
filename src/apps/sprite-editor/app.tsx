@@ -107,8 +107,8 @@ function App({
 
   useEffect(() => {
     document.title = savedName
-      ? `Empix Sprite Editor — ${savedName}`
-      : "Empix Sprite Editor";
+      ? `Pixpix Sprite Editor — ${savedName}`
+      : "Pixpix Sprite Editor";
   }, [savedName]);
 
   const handleSave = async () => {

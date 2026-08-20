@@ -16,7 +16,7 @@ class Clipboard {
     console.log("clipboard write", data);
     const clipboardItem: Record<string, Blob> = {};
     if (Array.isArray(data.shapes) && data.shapes.length > 0) {
-      const encoded = `<empix>${JSON.stringify(data.shapes)}</empix>`;
+      const encoded = `<pixpix>${JSON.stringify(data.shapes)}</pixpix>`;
       const blob = new Blob([encoded], { type: "text/plain" });
       clipboardItem["text/plain"] = blob;
     } else if (data.text && data.text.length > 0) {
@@ -39,9 +39,9 @@ class Clipboard {
         if (type === "text/plain") {
           const blob = await item.getType(type);
           const text = await blob.text();
-          const empixMatch = text.match(/<empix>(.*)<\/empix>/);
-          if (empixMatch) {
-            data.shapes = JSON.parse(empixMatch[1]);
+          const pixpixMatch = text.match(/<pixpix>(.*)<\/pixpix>/);
+          if (pixpixMatch) {
+            data.shapes = JSON.parse(pixpixMatch[1]);
           } else {
             data.text = text;
           }

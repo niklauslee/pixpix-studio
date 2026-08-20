@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "compatibility_date": "2026-07-20",
   "compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
-  "name": "empix",
+  "name": "pixpix-studio",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "assets": {
     "directory": "./dist",
@@ -11,8 +11,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "empix",
-      "database_id": "9ad45d91-b4e1-473b-a2fb-c64b766e0afb",
+      "database_name": "pixpix-studio",
+      "database_id": "4dd9f406-f617-4087-ab16-9f7bc44f13ee",
       "migrations_dir": "drizzle/migrations",
       "remote": true,
     },
