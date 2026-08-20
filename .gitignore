@@ -17,6 +17,7 @@ pnpm-debug.log*
 .env
 .env.production
 .dev.vars
+.dev.vars.production
 
 # generated wrangler types
 worker-configuration.d.ts
