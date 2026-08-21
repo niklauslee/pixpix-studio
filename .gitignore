@@ -30,3 +30,6 @@ worker-configuration.d.ts
 
 # wrangler
 .wrangler/
+
+# secure
+README_SECURE.md
