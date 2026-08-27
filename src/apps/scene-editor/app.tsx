@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { SaveIcon } from "lucide-react";
+import { DownloadIcon, SaveIcon } from "lucide-react";
 import { app, AppContext } from "@/apps/scene-editor/app-context";
 import { Editor } from "@/components/editor/editor";
 import { EditorComponent } from "@/components/editor/editor-component";
@@ -17,6 +17,13 @@ import { LayersPanel } from "./layers";
 import { ScrollAreaBoth } from "@/components/ui/scroll-area-both";
 import { CodeDialog, useCodeDialog } from "@/components/dialogs/code-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportPNG, generateSVG } from "@/apps/scene-editor/engine/export-image";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -34,6 +41,15 @@ interface InitialScene {
   id: string;
   name: string;
   data: string;
+}
+
+function downloadBlob(name: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 async function api(path: string, init?: RequestInit) {
@@ -83,6 +99,31 @@ function App({
     );
     editor.fit();
     editor.repaint();
+  };
+
+  const handleExportPNG = async () => {
+    try {
+      const editor = window.app.editor;
+      const blob = await exportPNG(editor, editor.gc.scale);
+      downloadBlob(`${savedName || "scene"}.png`, blob);
+    } catch (error) {
+      console.error("Failed to export PNG:", error);
+      flash("Export failed");
+    }
+  };
+
+  const handleExportSVG = () => {
+    try {
+      const editor = window.app.editor;
+      const svg = generateSVG(editor);
+      downloadBlob(
+        `${savedName || "scene"}.svg`,
+        new Blob([svg], { type: "image/svg+xml" }),
+      );
+    } catch (error) {
+      console.error("Failed to export SVG:", error);
+      flash("Export failed");
+    }
   };
 
   const handlePropsChange = (props: ShapeProps) => {
@@ -193,6 +234,20 @@ function App({
             >
               Code
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="outline" />}>
+                <DownloadIcon className="size-3.5" />
+                Export
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportPNG}>
+                  Export as PNG
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportSVG}>
+                  Export as SVG
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {user ? (
               <Button
                 variant="outline"
