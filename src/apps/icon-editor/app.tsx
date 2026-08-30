@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { SaveIcon } from "lucide-react";
+import { DownloadIcon, SaveIcon } from "lucide-react";
 import { Appbar } from "@/components/appbar";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { IconCodeDialog, showIconCodeDialog } from "./code-dialog";
+import { defaultIdentifier } from "./code-generator";
 import { findIcon, parseIconSet, serializeIconSet } from "./icon";
 import {
   clear,
@@ -14,11 +21,25 @@ import {
   shift,
   type Tool,
 } from "./draw";
+import {
+  componentName,
+  generateIconSVG,
+  generateReactComponent,
+} from "./svg-generator";
 import { useIconStore } from "./icon-store";
 import { IconCanvas } from "./icon-canvas";
 import { IconList } from "./icon-list";
 import { PropertiesPanel } from "./properties";
 import { Toolbar } from "./toolbar";
+
+function downloadBlob(name: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 const TOOL_KEYS: Record<string, Tool> = {
   p: "pen",
@@ -148,6 +169,34 @@ function App({
     }
   };
 
+  const handleExportSVG = () => {
+    if (!icon) return;
+    try {
+      const svg = generateIconSVG(project.box, icon);
+      downloadBlob(
+        `${defaultIdentifier(icon)}.svg`,
+        new Blob([svg], { type: "image/svg+xml" }),
+      );
+    } catch (error) {
+      console.error("Failed to export SVG:", error);
+      flash("Export failed");
+    }
+  };
+
+  const handleExportReact = () => {
+    if (!icon) return;
+    try {
+      const code = generateReactComponent(project.box, icon);
+      downloadBlob(
+        `${componentName(icon)}.tsx`,
+        new Blob([code], { type: "text/plain" }),
+      );
+    } catch (error) {
+      console.error("Failed to export React component:", error);
+      flash("Export failed");
+    }
+  };
+
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
 
@@ -264,6 +313,29 @@ function App({
           >
             Code
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!icon}
+                  title="Export the selected icon"
+                />
+              }
+            >
+              <DownloadIcon className="size-3.5" />
+              Export
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportSVG}>
+                Export as SVG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportReact}>
+                Export as React Component
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {user ? (
             <Button
               variant="outline"
