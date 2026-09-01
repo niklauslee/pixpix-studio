@@ -87,6 +87,21 @@ export function defaultGlyphName(code: number): string {
   return `uni${code.toString(16).toUpperCase().padStart(4, "0")}`;
 }
 
+/** Family name: the family field of an XLFD name, or the name as-is. */
+export function fontFamily(font: Font): string {
+  const name = font.name.trim();
+  if (name.startsWith("-")) {
+    const family = name.split("-")[2];
+    if (family) return family;
+  }
+  return name || "pixpix";
+}
+
+/** Sanitized family name for use as a download file name (no extension). */
+export function fontFileName(font: Font): string {
+  return fontFamily(font).replace(/[^A-Za-z0-9._-]+/g, "-") || "pixpix";
+}
+
 export function formatCode(code: number): string {
   return `U+${code.toString(16).toUpperCase().padStart(4, "0")}`;
 }

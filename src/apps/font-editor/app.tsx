@@ -1,11 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { SaveIcon } from "lucide-react";
+import { DownloadIcon, SaveIcon } from "lucide-react";
 import { Appbar } from "@/components/appbar";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { FontCodeDialog, showFontCodeDialog } from "./code-dialog";
-import { findGlyph, formatCode, parseBDF, serializeBDF } from "./bdf";
+import {
+  findGlyph,
+  fontFileName,
+  formatCode,
+  parseBDF,
+  serializeBDF,
+} from "./bdf";
 import {
   clear,
   flipHorizontal,
@@ -20,6 +32,15 @@ import { GlyphList } from "./glyph-list";
 import { PropertiesPanel } from "./properties";
 import { Preview } from "./preview";
 import { Toolbar } from "./toolbar";
+
+function downloadBlob(name: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 const TOOL_KEYS: Record<string, Tool> = {
   p: "pen",
@@ -149,6 +170,31 @@ function App({
     }
   };
 
+  const handleExportBDF = () => {
+    try {
+      downloadBlob(
+        `${fontFileName(font)}.bdf`,
+        new Blob([serializeBDF(font)], { type: "text/plain" }),
+      );
+    } catch (error) {
+      console.error("Failed to export BDF:", error);
+      flash("Export failed");
+    }
+  };
+
+  const handleExportTTF = async () => {
+    try {
+      const { generateTTF } = await import("./ttf-generator");
+      downloadBlob(
+        `${fontFileName(font)}.ttf`,
+        new Blob([generateTTF(font)], { type: "font/ttf" }),
+      );
+    } catch (error) {
+      console.error("Failed to export TTF:", error);
+      flash("Export failed");
+    }
+  };
+
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
 
@@ -265,6 +311,29 @@ function App({
           >
             Code
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={font.glyphs.length === 0}
+                  title="Export the font"
+                />
+              }
+            >
+              <DownloadIcon className="size-3.5" />
+              Export
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportBDF}>
+                Export as BDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportTTF}>
+                Export as TTF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {user ? (
             <Button
               variant="outline"
