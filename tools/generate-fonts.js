@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Reads all *.bdf files under public/bdf, compresses each with pako (zlib
+// Reads all *.bdf files under res/bdf, compresses each with pako (zlib
 // deflate), base64-encodes the result, and writes src/embeded-fonts.ts
 // containing the embedded font data plus a helper to decode it back to the
 // original BDF text.
