@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DownloadIcon, SaveIcon } from "lucide-react";
+import { DownloadIcon, EllipsisIcon, SaveIcon } from "lucide-react";
 import { Appbar } from "@/components/appbar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -11,6 +11,10 @@ import {
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { FontCodeDialog, showFontCodeDialog } from "./code-dialog";
+import {
+  FilterCharsetDialog,
+  useFilterCharsetDialog,
+} from "./filter-charset-dialog";
 import {
   findGlyph,
   fontFileName,
@@ -334,6 +338,22 @@ function App({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" size="icon-sm" title="More actions" />
+              }
+            >
+              <EllipsisIcon className="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => useFilterCharsetDialog.getState().show()}
+              >
+                Filter Charset
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {user ? (
             <Button
               variant="outline"
@@ -408,6 +428,7 @@ function App({
 
       <ConfirmDialog />
       <FontCodeDialog />
+      <FilterCharsetDialog />
     </>
   );
 }

@@ -24,13 +24,13 @@ import {
   type Glyph,
 } from "@/apps/font-editor/bdf";
 import { loadDefaultGlyphSource } from "@/apps/font-editor/font-store";
-import { codepointsForRanges } from "./charsets";
+import { codepointsForRanges } from "@/lib/charsets";
 import { EditableName } from "./editable-name";
 import { NewFontDialog, useNewFontDialog } from "./new-font-dialog";
 import { Sidebar, type DashboardView } from "./sidebar";
 
 /**
- * A fresh font for the given ranges (see charsets.ts). When `fillGlyphs` is
+ * A fresh font for the given ranges (see lib/charsets.ts). When `fillGlyphs` is
  * set, glyphs are pre-filled with shapes from the built-in default font
  * instead of being left blank.
  */

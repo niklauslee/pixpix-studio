@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { GLYPH_RANGES } from "./charsets";
+import { GLYPH_RANGES } from "@/lib/charsets";
 
 export interface NewFontDialogState {
   open: boolean;
