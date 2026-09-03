@@ -184,9 +184,10 @@ export function GlyphList({ className, ...others }: GlyphListProps) {
                   </div>
                   <span
                     className={cn(
-                      "font-mono text-xs leading-none",
+                      "text-xs leading-none",
                       selected ? "text-neutral-100" : "text-muted-foreground",
                     )}
+                    style={{ fontFamily: "system-ui, sans-serif" }}
                   >
                     {charLabel(glyph.code)}
                   </span>
