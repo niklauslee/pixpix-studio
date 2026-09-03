@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  CopyIcon,
   DownloadIcon,
   LogOutIcon,
   PlusIcon,
@@ -384,6 +385,23 @@ function App({ user }: { user: DashboardUser }) {
     }
   };
 
+  const handleDuplicate = async (row: FontRow) => {
+    try {
+      const response = await api(`/api/fonts/${row.id}`);
+      const full: FontRow & { data: string } = await response.json();
+      const createResponse = await api("/api/fonts", {
+        method: "POST",
+        body: JSON.stringify({ name: `${full.name} copy`, data: full.data }),
+      });
+      const created: FontRow = await createResponse.json();
+      setFonts((current) => [created, ...(current ?? [])]);
+      flash(`Duplicated ${full.name}`);
+    } catch (error) {
+      console.error("Failed to duplicate the font:", error);
+      flash("Duplicate failed");
+    }
+  };
+
   const handleUploadIconSet = async (file: File) => {
     try {
       const data = await file.text();
@@ -736,7 +754,7 @@ function App({ user }: { user: DashboardUser }) {
                   </div>
 
                   <div className="border-[1.5px] border-neutral-800">
-                    <div className="grid grid-cols-[1fr_80px_180px_116px] items-center gap-2 border-b-[1.5px] border-neutral-800 px-4 py-2 text-xs text-muted-foreground">
+                    <div className="grid grid-cols-[1fr_80px_180px_146px] items-center gap-2 border-b-[1.5px] border-neutral-800 px-4 py-2 text-xs text-muted-foreground">
                       <div>Name</div>
                       <div>Glyphs</div>
                       <div>Updated</div>
@@ -759,7 +777,7 @@ function App({ user }: { user: DashboardUser }) {
                     {fonts?.map((row) => (
                       <div
                         key={row.id}
-                        className="grid grid-cols-[1fr_80px_180px_116px] items-center gap-2 border-b-[1.5px] border-neutral-800 px-4 py-2 text-xs last:border-b-0"
+                        className="grid grid-cols-[1fr_80px_180px_146px] items-center gap-2 border-b-[1.5px] border-neutral-800 px-4 py-2 text-xs last:border-b-0"
                       >
                         <EditableName
                           name={row.name}
@@ -782,6 +800,14 @@ function App({ user }: { user: DashboardUser }) {
                             }
                           >
                             <SquarePenIcon className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Duplicate"
+                            onClick={() => handleDuplicate(row)}
+                          >
+                            <CopyIcon className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
