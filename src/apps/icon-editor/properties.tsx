@@ -95,6 +95,7 @@ function IconProperties() {
   const project = useIconStore((state) => state.project);
   const name = useIconStore((state) => state.name);
   const renameIcon = useIconStore((state) => state.renameIcon);
+  const duplicateIcon = useIconStore((state) => state.duplicateIcon);
   const removeIcon = useIconStore((state) => state.removeIcon);
   const icon = findIcon(project, name);
 
@@ -118,6 +119,20 @@ function IconProperties() {
         />
       </Row>
       <div className="mt-1 flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1"
+          onClick={() => duplicateIcon(icon.name)}
+        >
+          Duplicate Icon
+        </Button>
+        <Help title="Duplicate Icon">
+          Adds a copy of this icon's pixels right after it, under a new numbered
+          name, and selects it. Structural edits clear the undo stack.
+        </Help>
+      </div>
+      <div className="flex items-center gap-1">
         <Button
           variant="outline"
           size="sm"

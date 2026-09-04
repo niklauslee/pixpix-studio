@@ -1,4 +1,4 @@
-import { PlusIcon } from "lucide-react";
+import { CopyIcon, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export function IconList({ className, ...others }: IconListProps) {
   const setFilter = useIconStore((state) => state.setFilter);
   const selectName = useIconStore((state) => state.selectName);
   const addIcon = useIconStore((state) => state.addIcon);
+  const duplicateIcon = useIconStore((state) => state.duplicateIcon);
   const reorderIcon = useIconStore((state) => state.reorderIcon);
 
   const filtered = useMemo(
@@ -102,6 +103,15 @@ export function IconList({ className, ...others }: IconListProps) {
           onClick={handleAdd}
         >
           <PlusIcon className="size-3.5" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          title="Duplicate the selected icon"
+          disabled={!name}
+          onClick={() => duplicateIcon(name)}
+        >
+          <CopyIcon className="size-3.5" />
         </Button>
       </div>
       <div className="min-h-0 flex-1">

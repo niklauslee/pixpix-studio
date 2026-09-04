@@ -33,7 +33,7 @@ function loadCellSize(): number {
 
 /**
  * An undoable bitmap edit. Only bitmap edits are undoable — structural changes
- * (import, add/remove icon, box resize) clear the stacks instead.
+ * (import, add/remove/duplicate icon, box resize) clear the stacks instead.
  */
 interface Patch {
   name: string;
@@ -70,6 +70,8 @@ export interface IconEditorState {
   updateProject: (box: Partial<Box>) => void;
   renameIcon: (name: string, next: string) => void;
   addIcon: (name: string) => void;
+  /** Copy `name`'s bitmap into a new icon inserted right after it. */
+  duplicateIcon: (name: string) => void;
   removeIcon: (name: string) => void;
   /** Move `name` to just before `beforeName`, or to the end if `beforeName` is null. */
   reorderIcon: (name: string, beforeName: string | null) => void;
@@ -168,6 +170,27 @@ export const useIconStore = create<IconEditorState>()((set, get) => ({
     const { project } = get();
     const unique = uniqueName(project, name || "icon");
     const icons = [...project.icons, createIcon(project.box, unique)];
+    set({
+      project: { ...project, icons },
+      name: unique,
+      undoStack: [],
+      redoStack: [],
+    });
+  },
+
+  duplicateIcon: (name) => {
+    const { project } = get();
+    const index = project.icons.findIndex((icon) => icon.name === name);
+    if (index < 0) return;
+    // drop a trailing `_<n>` so duplicating `icon_1` yields `icon_2`
+    // instead of chaining into `icon_1_1`
+    const unique = uniqueName(project, name.replace(/_\d+$/, "") || name);
+    const copy: Icon = {
+      name: unique,
+      pixels: [...project.icons[index].pixels],
+    };
+    const icons = [...project.icons];
+    icons.splice(index + 1, 0, copy);
     set({
       project: { ...project, icons },
       name: unique,

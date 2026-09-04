@@ -244,6 +244,11 @@ function App({
         else store.undo();
         return;
       }
+      if (mod && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        if (current) store.duplicateIcon(current.name);
+        return;
+      }
       if (mod && (event.key === "=" || event.key === "+")) {
         event.preventDefault();
         store.setCellSize(store.cellSize + 2);

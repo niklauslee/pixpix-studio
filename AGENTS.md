@@ -265,8 +265,8 @@ a single `keydown` listener in `app.tsx`, same as the font editor.
   shared import (see above).
 - `icon-store.ts` — zustand store: the `IconSet`, selected icon name, tool,
   cell size, guides, filter, hover cell, and an undo stack of bitmap patches
-  keyed by icon name (structural edits — add/remove icon, box resize — clear
-  it). Like the font, the set is **not** persisted locally: it starts as a
+  keyed by icon name (structural edits — add/remove/duplicate icon, box
+  resize — clear it). Like the font, the set is **not** persisted locally: it starts as a
   blank 16×16 set and is kept in memory only. Only the cell-size (zoom)
   preference lives in `localStorage` (`icon-editor-cell-size`).
 - `render.ts` — `setupCanvas` plus `drawIcon` (plain top-left pixel blit — no
