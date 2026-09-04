@@ -284,6 +284,12 @@ a single `keydown` listener in `app.tsx`, same as the font editor.
   emits one `#define`/byte-array block per icon. `code-dialog.tsx`
   (`IconCodeDialog` / `showIconCodeDialog`) picks the language, PROGMEM, and
   whether to export all icons or just the selected one.
+  `generateIconSetJSON(box, icons)` reuses the same `toXBMBytes` packing to
+  emit a machine-readable JSON array (`{id, name, width, height, xbmp}` per
+  icon, `xbmp` as plain 0-255 numbers, `name` the raw icon name) for non-C
+  toolchains; the appbar's Export dropdown offers it as "Export as JSON"
+  (whole set, download only — no dialog) alongside the selected-icon SVG and
+  React component exports.
 
 ## Sprite editor (`src/apps/sprite-editor/`)
 

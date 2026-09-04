@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { IconCodeDialog, showIconCodeDialog } from "./code-dialog";
-import { defaultIdentifier } from "./code-generator";
+import { defaultIdentifier, generateIconSetJSON } from "./code-generator";
 import { findIcon, parseIconSet, serializeIconSet } from "./icon";
 import {
   clear,
@@ -197,6 +197,19 @@ function App({
     }
   };
 
+  const handleExportJSON = () => {
+    try {
+      const json = generateIconSetJSON(project.box, project.icons);
+      downloadBlob(
+        `${savedName || "icons"}.json`,
+        new Blob([json], { type: "application/json" }),
+      );
+    } catch (error) {
+      console.error("Failed to export JSON:", error);
+      flash("Export failed");
+    }
+  };
+
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
 
@@ -319,8 +332,8 @@ function App({
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!icon}
-                  title="Export the selected icon"
+                  disabled={project.icons.length === 0}
+                  title="Export icons"
                 />
               }
             >
@@ -328,11 +341,14 @@ function App({
               Export
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportSVG}>
+              <DropdownMenuItem disabled={!icon} onClick={handleExportSVG}>
                 Export as SVG
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportReact}>
+              <DropdownMenuItem disabled={!icon} onClick={handleExportReact}>
                 Export as React Component
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportJSON}>
+                Export as JSON
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
