@@ -8,7 +8,7 @@ import type { Box, Icon } from "./icon";
 import { useIconStore } from "./icon-store";
 import { drawIcon, setupCanvas } from "./render";
 
-const THUMB_SIZE = 26;
+const THUMB_SIZE = 28;
 
 function matches(icon: Icon, filter: string): boolean {
   const value = filter.trim().toLowerCase();
