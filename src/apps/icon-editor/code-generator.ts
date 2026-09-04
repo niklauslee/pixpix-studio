@@ -93,12 +93,12 @@ export interface IconJSONEntry {
   name: string;
   width: number;
   height: number;
-  xbmp: number[];
+  xbm: number[];
 }
 
 /**
  * Serialize the whole set as a JSON array of {@link IconJSONEntry}, so other
- * toolchains can consume the bitmaps without parsing generated C. `xbmp` uses
+ * toolchains can consume the bitmaps without parsing generated C. `xbm` uses
  * the same packing as {@link generateXBM} — LSB-first, byte-padded per row.
  */
 export function generateIconSetJSON(box: Box, icons: Icon[]): string {
@@ -107,10 +107,10 @@ export function generateIconSetJSON(box: Box, icons: Icon[]): string {
     name: icon.name,
     width: box.w,
     height: box.h,
-    xbmp: toXBMBytes(box, icon),
+    xbm: toXBMBytes(box, icon),
   }));
   if (entries.length === 0) return "[]\n";
-  // hand-formatted so each `xbmp` stays on one line — `JSON.stringify(_, 2)`
+  // hand-formatted so each `xbm` stays on one line — `JSON.stringify(_, 2)`
   // would put every byte on its own.
   const body = entries
     .map(
@@ -120,7 +120,7 @@ export function generateIconSetJSON(box: Box, icons: Icon[]): string {
         `    "name": ${JSON.stringify(entry.name)},\n` +
         `    "width": ${entry.width},\n` +
         `    "height": ${entry.height},\n` +
-        `    "xbmp": [${entry.xbmp.join(", ")}]\n` +
+        `    "xbm": [${entry.xbm.join(", ")}]\n` +
         `  }`,
     )
     .join(",\n");
