@@ -208,54 +208,58 @@ export class BoxSizeController extends Controller {
   update(editor: Editor, shape: Shape, e: PointerEvent, point: number[]) {
     if (this.dxStep === 0 && this.dyStep === 0) return;
     const r = geometry.copyRect(this.initialRect);
+    // `r`'s corners are inclusive of the last pixel (see getBoundingRect()),
+    // so geometry.width/height(r) reads one less than the actual size; the
+    // min-size checks below compare against `min - 1` and clamp back to it
+    // so the actual (width/height) ends up exactly `min`, not `min + 1`.
     const min = this.options.minSize;
     switch (this.options.position) {
       case ControllerPosition.TOP:
         r[0][1] += this.dy;
-        if (geometry.height(r) < min) r[0][1] = r[1][1] - min;
+        if (geometry.height(r) < min - 1) r[0][1] = r[1][1] - (min - 1);
         break;
       case ControllerPosition.BOTTOM:
         r[1][1] += this.dy;
-        if (geometry.height(r) < min) r[1][1] = r[0][1] + min;
+        if (geometry.height(r) < min - 1) r[1][1] = r[0][1] + (min - 1);
         break;
       case ControllerPosition.LEFT:
         r[0][0] += this.dx;
-        if (geometry.width(r) < min) r[0][0] = r[1][0] - min;
+        if (geometry.width(r) < min - 1) r[0][0] = r[1][0] - (min - 1);
         break;
       case ControllerPosition.RIGHT:
         r[1][0] += this.dx;
-        if (geometry.width(r) < min) r[1][0] = r[0][0] + min;
+        if (geometry.width(r) < min - 1) r[1][0] = r[0][0] + (min - 1);
         break;
       case ControllerPosition.LEFT_TOP:
         r[0][0] += this.dx;
         r[0][1] += this.dy;
-        if (geometry.width(r) < min) r[0][0] = r[1][0] - min;
-        if (geometry.height(r) < min) r[0][1] = r[1][1] - min;
+        if (geometry.width(r) < min - 1) r[0][0] = r[1][0] - (min - 1);
+        if (geometry.height(r) < min - 1) r[0][1] = r[1][1] - (min - 1);
         break;
       case ControllerPosition.RIGHT_TOP:
         r[1][0] += this.dx;
         r[0][1] += this.dy;
-        if (geometry.width(r) < min) r[1][0] = r[0][0] + min;
-        if (geometry.height(r) < min) r[0][1] = r[1][1] - min;
+        if (geometry.width(r) < min - 1) r[1][0] = r[0][0] + (min - 1);
+        if (geometry.height(r) < min - 1) r[0][1] = r[1][1] - (min - 1);
         break;
       case ControllerPosition.LEFT_BOTTOM:
         r[0][0] += this.dx;
         r[1][1] += this.dy;
-        if (geometry.width(r) < min) r[0][0] = r[1][0] - min;
-        if (geometry.height(r) < min) r[1][1] = r[0][1] + min;
+        if (geometry.width(r) < min - 1) r[0][0] = r[1][0] - (min - 1);
+        if (geometry.height(r) < min - 1) r[1][1] = r[0][1] + (min - 1);
         break;
       case ControllerPosition.RIGHT_BOTTOM:
         r[1][0] += this.dx;
         r[1][1] += this.dy;
-        if (geometry.width(r) < min) r[1][0] = r[0][0] + min;
-        if (geometry.height(r) < min) r[1][1] = r[0][1] + min;
+        if (geometry.width(r) < min - 1) r[1][0] = r[0][0] + (min - 1);
+        if (geometry.height(r) < min - 1) r[1][1] = r[0][1] + (min - 1);
         break;
     }
     const nr = geometry.normalizeRect(r);
     editor.transform.assign(shape, "left", nr[0][0]);
     editor.transform.assign(shape, "top", nr[0][1]);
-    editor.transform.assign(shape, "width", geometry.width(nr));
-    editor.transform.assign(shape, "height", geometry.height(nr));
+    editor.transform.assign(shape, "width", geometry.width(nr) + 1);
+    editor.transform.assign(shape, "height", geometry.height(nr) + 1);
   }
 
   finalize(editor: Editor, shape: Shape, e: PointerEvent, point: number[]) {
