@@ -11,6 +11,12 @@ import {
 import { Appbar } from "@/components/appbar";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ConfirmDialog,
   useConfirmDialog,
 } from "@/components/dialogs/confirm-dialog";
@@ -27,6 +33,7 @@ import {
 import { loadDefaultGlyphSource } from "@/apps/font-editor/font-store";
 import { codepointsForRanges } from "@/lib/charsets";
 import { EditableName } from "./editable-name";
+import { ImportTtfDialog, useImportTtfDialog } from "./import-ttf-dialog";
 import { NewFontDialog, useNewFontDialog } from "./new-font-dialog";
 import { Sidebar, type DashboardView } from "./sidebar";
 
@@ -153,6 +160,7 @@ function App({ user }: { user: DashboardUser }) {
       : "scenes";
   });
   const fileRef = useRef<HTMLInputElement>(null);
+  const ttfFileRef = useRef<HTMLInputElement>(null);
   const sceneFileRef = useRef<HTMLInputElement>(null);
   const iconSetFileRef = useRef<HTMLInputElement>(null);
   const spriteSetFileRef = useRef<HTMLInputElement>(null);
@@ -313,6 +321,38 @@ function App({ user }: { user: DashboardUser }) {
     } catch (error) {
       console.error("Failed to upload the font:", error);
       flash("Upload failed — not a valid BDF file");
+    }
+  };
+
+  const handleImportTTF = async (
+    file: File,
+    pixelSize: number,
+    rangeIds: Set<string>,
+  ) => {
+    try {
+      const { importTTF } = await import("@/apps/font-editor/ttf-import");
+      const buffer = await file.arrayBuffer();
+      const name = file.name.replace(/\.(ttf|otf)$/i, "");
+      const { font, missing } = importTTF(
+        buffer,
+        name,
+        pixelSize,
+        codepointsForRanges(rangeIds),
+      );
+      const response = await api("/api/fonts", {
+        method: "POST",
+        body: JSON.stringify({ name, data: serializeBDF(font) }),
+      });
+      const created: FontRow = await response.json();
+      setFonts((current) => [created, ...(current ?? [])]);
+      flash(
+        missing.length > 0
+          ? `Imported ${file.name} (${missing.length} glyph${missing.length === 1 ? "" : "s"} missing from the font)`
+          : `Imported ${file.name}`,
+      );
+    } catch (error) {
+      console.error("Failed to import the font:", error);
+      flash("Import failed — not a valid TTF/OTF file");
     }
   };
 
@@ -741,15 +781,32 @@ function App({ user }: { user: DashboardUser }) {
                         <PlusIcon className="size-3.5" />
                         New Font
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        title="Upload a BDF file"
-                        onClick={() => fileRef.current?.click()}
-                      >
-                        <UploadIcon className="size-3.5" />
-                        Upload Font
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Upload a font file"
+                            />
+                          }
+                        >
+                          <UploadIcon className="size-3.5" />
+                          Upload Font
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => fileRef.current?.click()}
+                          >
+                            Upload BDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => ttfFileRef.current?.click()}
+                          >
+                            Upload TTF/OTF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
@@ -769,8 +826,8 @@ function App({ user }: { user: DashboardUser }) {
 
                     {fonts !== null && fonts.length === 0 && (
                       <div className="px-4 py-6 text-center text-xs text-muted-foreground/60">
-                        No fonts yet — export one from the font editor and
-                        upload it here.
+                        No fonts yet — export one from the font editor, or
+                        upload a BDF, TTF or OTF file.
                       </div>
                     )}
 
@@ -1100,8 +1157,20 @@ function App({ user }: { user: DashboardUser }) {
           if (file) handleUpload(file);
         }}
       />
+      <input
+        ref={ttfFileRef}
+        type="file"
+        accept=".ttf,.otf,font/ttf,font/otf"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) useImportTtfDialog.getState().show(file);
+        }}
+      />
       <ConfirmDialog />
       <NewFontDialog onCreate={handleCreate} />
+      <ImportTtfDialog onImport={handleImportTTF} />
     </>
   );
 }
