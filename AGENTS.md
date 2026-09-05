@@ -87,6 +87,7 @@ src/
     astro/head.astro, logo.tsx, appbar.tsx
   lib/
     utils.ts        cn, detectPlatform, generateNewName, odd
+    zip.ts          createZip() — minimal stored (uncompressed) ZIP writer
     auth.ts         getAuth() — lazy better-auth singleton (GitHub OAuth + D1)
     auth-client.ts  authClient — better-auth browser client (signIn/signOut)
     db/             schema.ts (Drizzle), index.ts (getDb()), fonts.ts, scenes.ts, icon-sets.ts, sprite-sets.ts
@@ -288,8 +289,17 @@ a single `keydown` listener in `app.tsx`, same as the font editor.
   emit a machine-readable JSON array (`{id, name, width, height, xbmp}` per
   icon, `xbmp` as plain 0-255 numbers, `name` the raw icon name) for non-C
   toolchains; the appbar's Export dropdown offers it as "Export as JSON"
-  (whole set, download only — no dialog) alongside the selected-icon SVG and
-  React component exports.
+  (whole set, download only — no dialog).
+- `svg-generator.ts` — the SVG/React side of the Export dropdown, all
+  `currentColor` fill with the icon's own box as `viewBox`. "Export as SVG"
+  is one icon (`generateIconSVG`, the selected one); "Export as React
+  Components" is the whole set — `generateReactBundle(box, icons)` returns
+  one `.tsx` per icon plus a shared `type.ts` (`IconProps` with just `size`)
+  and an `index.ts` barrel, styled like the hand-written
+  `src/components/icons/`, which `app.tsx` packs with `createZip()` from
+  `@/lib/zip` into a single `<name>-react.zip` download. File names are
+  kebab-case and component names PascalCase, both de-duplicated since
+  distinct icon names can normalize to the same identifier.
 
 ## Sprite editor (`src/apps/sprite-editor/`)
 

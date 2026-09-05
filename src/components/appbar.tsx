@@ -1,4 +1,4 @@
-import { LayoutDashboardIcon } from "lucide-react";
+import { LayoutIcon } from "@/components/icons";
 import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +58,7 @@ export function Appbar({
             title="Back to Dashboard"
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
-            <LayoutDashboardIcon className="size-3.5" />
+            <LayoutIcon className="size-3.5" />
             Dashboard
           </a>
         )}

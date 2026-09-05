@@ -1,4 +1,4 @@
-import { CopyIcon, PlusIcon } from "lucide-react";
+import { DuplicateIcon, PlusIcon } from "@/components/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -111,7 +111,7 @@ export function IconList({ className, ...others }: IconListProps) {
           disabled={!name}
           onClick={() => duplicateIcon(name)}
         >
-          <CopyIcon className="size-3.5" />
+          <DuplicateIcon className="size-3.5" />
         </Button>
       </div>
       <div className="min-h-0 flex-1">

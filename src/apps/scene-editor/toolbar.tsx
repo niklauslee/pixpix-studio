@@ -4,19 +4,19 @@ import { useKeymapStore } from "@/apps/scene-editor/store/keymap-store";
 import {
   BringToFrontIcon,
   CircleIcon,
-  CopyIcon,
+  CursorIcon,
+  DuplicateIcon,
+  LineIcon,
   MinusIcon,
-  MousePointer2Icon,
-  PencilIcon,
+  PenIcon,
   PlusIcon,
-  Redo2Icon,
+  RectangleIcon,
+  RedoIcon,
   SendToBackIcon,
-  SlashIcon,
-  SquareIcon,
-  Trash2Icon,
-  TypeIcon,
-  Undo2Icon,
-} from "lucide-react";
+  TextIcon,
+  TrashIcon,
+  UndoIcon,
+} from "@/components/icons";
 
 export function Toolbar() {
   const activeHandler = useEditorStore((state) => state.activeHandler);
@@ -34,7 +34,7 @@ export function Toolbar() {
               window.app.editor.handlers.setActiveHandler("Select");
             }}
           >
-            <MousePointer2Icon />
+            <CursorIcon />
           </Button>
           <Button
             title={`Rectangle ⎯ ${formattedKeys["tool:rectangle"]}`}
@@ -44,7 +44,7 @@ export function Toolbar() {
               window.app.editor.handlers.setActiveHandler("Rectangle");
             }}
           >
-            <SquareIcon />
+            <RectangleIcon />
           </Button>
           <Button
             title={`Ellipse ⎯ ${formattedKeys["tool:ellipse"]}`}
@@ -64,7 +64,7 @@ export function Toolbar() {
               window.app.editor.handlers.setActiveHandler("Line");
             }}
           >
-            <SlashIcon />
+            <LineIcon />
           </Button>
           <Button
             title={`Text ⎯ ${formattedKeys["tool:text"]}`}
@@ -74,7 +74,7 @@ export function Toolbar() {
               window.app.editor.handlers.setActiveHandler("Text");
             }}
           >
-            <TypeIcon />
+            <TextIcon />
           </Button>
           <Button
             title={`Pen ⎯ ${formattedKeys["tool:pen"]}`}
@@ -84,7 +84,7 @@ export function Toolbar() {
               window.app.editor.handlers.setActiveHandler("Pen");
             }}
           >
-            <PencilIcon />
+            <PenIcon />
           </Button>
           {/* <Button
           variant={activeHandler === "Bitmap" ? "default" : "outline"}
@@ -126,7 +126,7 @@ export function Toolbar() {
               window.app.editor.actions.undo();
             }}
           >
-            <Undo2Icon />
+            <UndoIcon />
           </Button>
           <Button
             title={`Redo ⎯ ${formattedKeys["edit:redo"]}`}
@@ -136,7 +136,7 @@ export function Toolbar() {
               window.app.editor.actions.redo();
             }}
           >
-            <Redo2Icon />
+            <RedoIcon />
           </Button>
           <Button
             title={`Delete ⎯ ${formattedKeys["edit:delete"]}`}
@@ -146,7 +146,7 @@ export function Toolbar() {
               window.app.editor.actions.delete();
             }}
           >
-            <Trash2Icon />
+            <TrashIcon />
           </Button>
           <Button
             title={`Duplicate ⎯ ${formattedKeys["edit:duplicate"]}`}
@@ -156,7 +156,7 @@ export function Toolbar() {
               window.app.editor.actions.duplicate();
             }}
           >
-            <CopyIcon />
+            <DuplicateIcon />
           </Button>
           <Button
             title={`Bring to Front ⎯ ${formattedKeys["align:bring-to-front"]}`}

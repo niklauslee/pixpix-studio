@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { DownloadIcon, SaveIcon } from "lucide-react";
+import { ExportIcon, SaveIcon } from "@/components/icons";
 import { app, AppContext } from "@/apps/scene-editor/app-context";
 import { Editor } from "@/components/editor/editor";
 import { EditorComponent } from "@/components/editor/editor-component";
@@ -236,7 +236,7 @@ function App({
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="outline" />}>
-                <DownloadIcon className="size-3.5" />
+                <ExportIcon className="size-3.5" />
                 Export
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

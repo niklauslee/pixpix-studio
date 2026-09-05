@@ -1,6 +1,6 @@
 ---
 import { GithubLogoIcon } from "@phosphor-icons/react";
-import { ImageIcon, MonitorIcon, TypeIcon } from "lucide-react";
+import { ImageIcon, MonitorIcon, TextIcon } from "@/components/icons";
 import Head from "../components/astro/head.astro";
 import { Button } from "../components/ui/button";
 import "../styles/global.css";
@@ -40,7 +40,7 @@ if (user) {
         <div
           class="flex flex-col gap-2 rounded-xl border border-border bg-card p-5 text-card-foreground"
         >
-          <TypeIcon className="size-5 text-green-600" />
+          <TextIcon className="size-5 text-green-600" />
           <div class="text-sm font-medium">Font editor</div>
           <p class="text-xs text-muted-foreground">
             A BDF glyph editor for crafting bitmap fonts for your display.

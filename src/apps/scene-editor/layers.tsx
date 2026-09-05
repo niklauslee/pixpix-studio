@@ -2,10 +2,10 @@ import { cn } from "@/lib/utils";
 import { ShapeType, type Shape } from "@/components/editor/shapes";
 import {
   RectangleIcon,
-  EllipseIcon,
+  CircleIcon,
   LineIcon,
   TextIcon,
-  BitmapIcon,
+  ImageIcon,
   PenIcon,
 } from "@/components/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,11 +34,11 @@ const LayerItem: React.FC<{
     >
       <div className="min-w-4 min-h-4 flex items-center justify-center">
         {shape.type === ShapeType.RECTANGLE && <RectangleIcon size={14} />}
-        {shape.type === ShapeType.ELLIPSE && <EllipseIcon size={14} />}
+        {shape.type === ShapeType.ELLIPSE && <CircleIcon size={14} />}
         {shape.type === ShapeType.LINE && <LineIcon size={14} />}
         {shape.type === ShapeType.TEXT && <TextIcon size={14} />}
         {shape.type === ShapeType.PEN && <PenIcon size={14} />}
-        {shape.type === ShapeType.BITMAP && <BitmapIcon size={14} />}
+        {shape.type === ShapeType.BITMAP && <ImageIcon size={14} />}
       </div>
       <div className="truncate">{shape.name}</div>
     </div>

@@ -1,4 +1,9 @@
-import { ImageIcon, LayersIcon, MonitorIcon, TypeIcon } from "lucide-react";
+import {
+  ImageIcon,
+  LayersIcon,
+  MonitorIcon,
+  TextIcon,
+} from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 export type DashboardView = "scenes" | "fonts" | "icons" | "sprites";
@@ -14,7 +19,7 @@ const ITEMS: {
   icon: typeof MonitorIcon;
 }[] = [
   { id: "scenes", label: "Scenes", icon: MonitorIcon },
-  { id: "fonts", label: "Fonts", icon: TypeIcon },
+  { id: "fonts", label: "Fonts", icon: TextIcon },
   { id: "icons", label: "Icon Sets", icon: ImageIcon },
   { id: "sprites", label: "Sprite Sets", icon: LayersIcon },
 ];

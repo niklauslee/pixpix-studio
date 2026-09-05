@@ -9,18 +9,18 @@ import {
   ArrowUpIcon,
   ContrastIcon,
   EraserIcon,
-  FlipHorizontalIcon,
-  FlipVerticalIcon,
+  FlipHorzIcon,
+  FlipVertIcon,
+  LineIcon,
   MinusIcon,
   PaintBucketIcon,
-  PencilIcon,
+  PenIcon,
   PlusIcon,
-  Redo2Icon,
-  SlashIcon,
-  SquareIcon,
-  Trash2Icon,
-  Undo2Icon,
-} from "lucide-react";
+  RectangleIcon,
+  RedoIcon,
+  TrashIcon,
+  UndoIcon,
+} from "@/components/icons";
 import { findGlyph } from "./bdf";
 import {
   clear,
@@ -32,12 +32,12 @@ import {
 } from "./draw";
 import { useFontStore } from "./font-store";
 
-/** A lucide icon, narrowed to the props the toolbar passes. */
+/** An icon component, narrowed to the props the toolbar passes. */
 type IconComponent = React.ComponentType<{ className?: string }>;
 
 /**
  * Icon size, as a class rather than the `size` prop: `buttonVariants` styles
- * `svg:not([class*='size-'])` and that CSS wins over lucide's width/height.
+ * `svg:not([class*='size-'])` and that CSS wins over the icon's width/height.
  */
 const ICON = "size-3.5";
 
@@ -49,15 +49,15 @@ const TOOLS: {
   /** Extra icon classes — the filled rect reuses the outlined square. */
   iconClassName?: string;
 }[] = [
-  { id: "pen", label: "Pen", key: "P", icon: PencilIcon },
+  { id: "pen", label: "Pen", key: "P", icon: PenIcon },
   { id: "eraser", label: "Eraser", key: "E", icon: EraserIcon },
-  { id: "line", label: "Line", key: "L", icon: SlashIcon },
-  { id: "rect", label: "Rect", key: "R", icon: SquareIcon },
+  { id: "line", label: "Line", key: "L", icon: LineIcon },
+  { id: "rect", label: "Rect", key: "R", icon: RectangleIcon },
   {
     id: "rect-fill",
     label: "Rect filled",
     key: "Shift+R",
-    icon: SquareIcon,
+    icon: RectangleIcon,
     iconClassName: "fill-current",
   },
   { id: "fill", label: "Fill", key: "F", icon: PaintBucketIcon },
@@ -143,7 +143,7 @@ export function Toolbar() {
             disabled={!canUndo}
             onClick={undo}
           >
-            <Undo2Icon className={ICON} />
+            <UndoIcon className={ICON} />
           </Button>
           <Button
             size="icon-sm"
@@ -152,7 +152,7 @@ export function Toolbar() {
             disabled={!canRedo}
             onClick={redo}
           >
-            <Redo2Icon className={ICON} />
+            <RedoIcon className={ICON} />
           </Button>
         </div>
       </div>
@@ -193,7 +193,7 @@ export function Toolbar() {
             disabled={disabled}
             onClick={() => apply((pixels) => flipHorizontal(font.box, pixels))}
           >
-            <FlipHorizontalIcon className={ICON} />
+            <FlipHorzIcon className={ICON} />
           </Button>
           <Button
             size="icon-sm"
@@ -202,7 +202,7 @@ export function Toolbar() {
             disabled={disabled}
             onClick={() => apply((pixels) => flipVertical(font.box, pixels))}
           >
-            <FlipVerticalIcon className={ICON} />
+            <FlipVertIcon className={ICON} />
           </Button>
           <Button
             size="icon-sm"
@@ -211,7 +211,7 @@ export function Toolbar() {
             disabled={disabled}
             onClick={() => apply(() => clear(font.box))}
           >
-            <Trash2Icon className={ICON} />
+            <TrashIcon className={ICON} />
           </Button>
         </div>
         <Label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">

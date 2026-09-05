@@ -28,7 +28,6 @@
     "drizzle-orm": "^0.45.2",
     "js-base64": "^3.9.1",
     "keycode": "^2.2.1",
-    "lucide-react": "^1.28.0",
     "pako": "^3.0.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

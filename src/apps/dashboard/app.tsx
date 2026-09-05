@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  CopyIcon,
-  DownloadIcon,
-  LogOutIcon,
+  DuplicateIcon,
+  ExportIcon,
+  LogoutIcon,
   PlusIcon,
   SquarePenIcon,
-  Trash2Icon,
+  TrashIcon,
   UploadIcon,
-} from "lucide-react";
+} from "@/components/icons";
 import { Appbar } from "@/components/appbar";
 import { Button } from "@/components/ui/button";
 import {
@@ -598,7 +598,7 @@ function App({ user }: { user: DashboardUser }) {
                 location.href = "/login";
               }}
             >
-              <LogOutIcon className="size-3.5" />
+              <LogoutIcon className="size-3.5" />
             </Button>
           </div>
         </Appbar>
@@ -703,7 +703,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Download as .pixpix"
                             onClick={() => handleDownloadScene(row)}
                           >
-                            <DownloadIcon className="size-3.5" />
+                            <ExportIcon className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -711,7 +711,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Delete"
                             onClick={() => handleDeleteScene(row)}
                           >
-                            <Trash2Icon className="size-3.5" />
+                            <TrashIcon className="size-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -807,7 +807,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Duplicate"
                             onClick={() => handleDuplicate(row)}
                           >
-                            <CopyIcon className="size-3.5" />
+                            <DuplicateIcon className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -815,7 +815,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Download as BDF"
                             onClick={() => handleDownload(row)}
                           >
-                            <DownloadIcon className="size-3.5" />
+                            <ExportIcon className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -823,7 +823,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Delete"
                             onClick={() => handleDelete(row)}
                           >
-                            <Trash2Icon className="size-3.5" />
+                            <TrashIcon className="size-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -924,7 +924,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Download as .eicon"
                             onClick={() => handleDownloadIconSet(row)}
                           >
-                            <DownloadIcon className="size-3.5" />
+                            <ExportIcon className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -932,7 +932,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Delete"
                             onClick={() => handleDeleteIconSet(row)}
                           >
-                            <Trash2Icon className="size-3.5" />
+                            <TrashIcon className="size-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -1035,7 +1035,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Download as .esprite"
                             onClick={() => handleDownloadSpriteSet(row)}
                           >
-                            <DownloadIcon className="size-3.5" />
+                            <ExportIcon className="size-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1043,7 +1043,7 @@ function App({ user }: { user: DashboardUser }) {
                             title="Delete"
                             onClick={() => handleDeleteSpriteSet(row)}
                           >
-                            <Trash2Icon className="size-3.5" />
+                            <TrashIcon className="size-3.5" />
                           </Button>
                         </div>
                       </div>

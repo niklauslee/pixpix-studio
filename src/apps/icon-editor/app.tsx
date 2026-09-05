@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DownloadIcon, SaveIcon } from "lucide-react";
+import { ExportIcon, SaveIcon } from "@/components/icons";
 import { Appbar } from "@/components/appbar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { createZip } from "@/lib/zip";
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { IconCodeDialog, showIconCodeDialog } from "./code-dialog";
 import { defaultIdentifier, generateIconSetJSON } from "./code-generator";
@@ -21,11 +22,7 @@ import {
   shift,
   type Tool,
 } from "./draw";
-import {
-  componentName,
-  generateIconSVG,
-  generateReactComponent,
-} from "./svg-generator";
+import { generateIconSVG, generateReactBundle } from "./svg-generator";
 import { useIconStore } from "./icon-store";
 import { IconCanvas } from "./icon-canvas";
 import { IconList } from "./icon-list";
@@ -38,7 +35,9 @@ function downloadBlob(name: string, blob: Blob) {
   anchor.href = url;
   anchor.download = name;
   anchor.click();
-  URL.revokeObjectURL(url);
+  // deferred: revoking synchronously can cut off larger blobs (the React zip)
+  // before the browser has started reading them
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 const TOOL_KEYS: Record<string, Tool> = {
@@ -184,15 +183,11 @@ function App({
   };
 
   const handleExportReact = () => {
-    if (!icon) return;
     try {
-      const code = generateReactComponent(project.box, icon);
-      downloadBlob(
-        `${componentName(icon)}.tsx`,
-        new Blob([code], { type: "text/plain" }),
-      );
+      const files = generateReactBundle(project.box, project.icons);
+      downloadBlob(`${savedName || "icons"}-react.zip`, createZip(files));
     } catch (error) {
-      console.error("Failed to export React component:", error);
+      console.error("Failed to export React components:", error);
       flash("Export failed");
     }
   };
@@ -342,15 +337,15 @@ function App({
                 />
               }
             >
-              <DownloadIcon className="size-3.5" />
+              <ExportIcon className="size-3.5" />
               Export
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled={!icon} onClick={handleExportSVG}>
                 Export as SVG
               </DropdownMenuItem>
-              <DropdownMenuItem disabled={!icon} onClick={handleExportReact}>
-                Export as React Component
+              <DropdownMenuItem onClick={handleExportReact}>
+                Export as React Components
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportJSON}>
                 Export as JSON

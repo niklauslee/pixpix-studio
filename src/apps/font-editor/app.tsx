@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DownloadIcon, EllipsisIcon, SaveIcon } from "lucide-react";
+import { EllipsisIcon, ExportIcon, SaveIcon } from "@/components/icons";
 import { Appbar } from "@/components/appbar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -326,7 +326,7 @@ function App({
                 />
               }
             >
-              <DownloadIcon className="size-3.5" />
+              <ExportIcon className="size-3.5" />
               Export
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

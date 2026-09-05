@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckIcon, PencilIcon } from "lucide-react";
+import { CheckIcon, PenIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -46,7 +46,7 @@ export function EditableName({
             setEditing(true);
           }}
         >
-          <PencilIcon className="size-3.5" />
+          <PenIcon className="size-3.5" />
         </Button>
       </div>
     );

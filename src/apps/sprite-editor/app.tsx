@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SaveIcon } from "lucide-react";
+import { SaveIcon } from "@/components/icons";
 import { Appbar } from "@/components/appbar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

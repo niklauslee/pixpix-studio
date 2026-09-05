@@ -1,4 +1,4 @@
-import { CircleQuestionMarkIcon } from "lucide-react";
+import { HelpIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,7 +26,7 @@ const Help: React.FC<{ title: string; children: React.ReactNode }> = ({
       aria-label={`What is ${title}?`}
       className="cursor-pointer text-muted-foreground/60 outline-none hover:text-foreground data-popup-open:text-foreground"
     >
-      <CircleQuestionMarkIcon size={13} />
+      <HelpIcon size={13} />
     </PopoverTrigger>
     <PopoverContent align="end" side="left" className="w-60">
       <PopoverTitle>{title}</PopoverTitle>
