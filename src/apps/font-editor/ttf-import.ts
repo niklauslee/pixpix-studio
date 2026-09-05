@@ -17,12 +17,6 @@ import {
 const PAD = 3;
 const ALPHA_THRESHOLD = 128;
 
-export interface TtfImportResult {
-  font: Font;
-  /** Requested codepoints the font has no glyph for. */
-  missing: number[];
-}
-
 interface FoundGlyph {
   code: number;
   glyph: opentype.Glyph;
@@ -64,31 +58,27 @@ export function detectNativePixelSize(buffer: ArrayBuffer): number | null {
   return Number.isInteger(size) && size >= 4 && size <= 128 ? size : null;
 }
 
-/** Convert a TTF/OTF file into a pixpix Font, covering the given codepoints. */
+/** Convert a TTF/OTF file into a pixpix Font, covering every character it maps. */
 export function importTTF(
   buffer: ArrayBuffer,
   name: string,
   pixelSize: number,
-  codepoints: number[],
-): TtfImportResult {
+): Font {
   const otFont = opentype.parse(buffer);
   const scale = pixelSize / otFont.unitsPerEm;
 
+  const charmap: Record<string, number> =
+    otFont.tables.cmap?.glyphIndexMap ?? {};
   const found: FoundGlyph[] = [];
-  const missing: number[] = [];
   let maxWidthPx = pixelSize;
-  for (const code of codepoints) {
-    const index = otFont.charToGlyphIndex(String.fromCodePoint(code));
-    if (index === 0) {
-      missing.push(code);
-      continue;
-    }
+  for (const [key, index] of Object.entries(charmap)) {
     const glyph = otFont.glyphs.get(index);
     const bbox = glyph.getBoundingBox();
     const advancePx = Math.round((glyph.advanceWidth ?? 0) * scale);
     maxWidthPx = Math.max(maxWidthPx, advancePx, bbox.x2 * scale);
-    found.push({ code, glyph, advancePx });
+    found.push({ code: Number(key), glyph, advancePx });
   }
+  found.sort((a, b) => a.code - b.code);
 
   const originX = PAD;
   const baselineY = Math.round(otFont.ascender * scale) + PAD;
@@ -164,8 +154,5 @@ export function importTTF(
     };
   });
 
-  return {
-    font: { ...createFont({ name, box, pointSize: pixelSize }), glyphs },
-    missing,
-  };
+  return { ...createFont({ name, box, pointSize: pixelSize }), glyphs };
 }

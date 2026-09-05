@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { create } from "zustand";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -11,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { GLYPH_RANGES } from "@/lib/charsets";
 
 export interface ImportTtfDialogState {
   open: boolean;
@@ -19,11 +17,9 @@ export interface ImportTtfDialogState {
   pixelSize: number;
   /** Design grid of a pixel font, once detected — null for outline fonts. */
   nativeSize: number | null;
-  selected: Set<string>;
   setOpen: (open: boolean) => void;
   setPixelSize: (pixelSize: number) => void;
   setNativeSize: (nativeSize: number | null) => void;
-  toggleRange: (id: string, on: boolean) => void;
   show: (file: File) => void;
 }
 
@@ -32,43 +28,26 @@ export const useImportTtfDialog = create<ImportTtfDialogState>()((set) => ({
   file: null,
   pixelSize: 13,
   nativeSize: null,
-  selected: new Set(),
   setOpen: (open) => set({ open }),
   setPixelSize: (pixelSize) => set({ pixelSize }),
   setNativeSize: (nativeSize) =>
     set(nativeSize ? { nativeSize, pixelSize: nativeSize } : { nativeSize }),
-  toggleRange: (id, on) =>
-    set((state) => {
-      const selected = new Set(state.selected);
-      if (on) selected.add(id);
-      else selected.delete(id);
-      return { selected };
-    }),
-  show: (file) =>
-    set({
-      open: true,
-      file,
-      pixelSize: 13,
-      nativeSize: null,
-      selected: new Set(),
-    }),
+  show: (file) => set({ open: true, file, pixelSize: 13, nativeSize: null }),
 }));
 
 export function ImportTtfDialog({
   onImport,
 }: {
-  onImport: (file: File, pixelSize: number, selected: Set<string>) => void;
+  onImport: (file: File, pixelSize: number) => void;
 }) {
   const {
     open,
     file,
     pixelSize,
     nativeSize,
-    selected,
     setOpen,
     setPixelSize,
     setNativeSize,
-    toggleRange,
   } = useImportTtfDialog();
 
   // a pixel font only survives rasterization at its own design grid, so detect
@@ -100,9 +79,8 @@ export function ImportTtfDialog({
         <DialogHeader>
           <DialogTitle>Import {file?.name}</DialogTitle>
           <DialogDescription>
-            The outline font is rasterized into a bitmap at the pixel size
-            below. Basic Latin is always included — add more glyph ranges as
-            needed.
+            Every character in the font is rasterized into a bitmap at the pixel
+            size below.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5">
@@ -133,27 +111,6 @@ export function ImportTtfDialog({
             </span>
           )}
         </div>
-        <div className="flex flex-col gap-3">
-          {GLYPH_RANGES.map((range) => (
-            <label
-              key={range.id}
-              className="group/field flex items-start gap-2"
-            >
-              <Checkbox
-                className="mt-0.5"
-                checked={range.core || selected.has(range.id)}
-                disabled={range.core}
-                onCheckedChange={(value) => toggleRange(range.id, value === true)}
-              />
-              <span className="flex flex-col">
-                <span>{range.label}</span>
-                <span className="text-muted-foreground">
-                  {range.description}
-                </span>
-              </span>
-            </label>
-          ))}
-        </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
@@ -161,7 +118,7 @@ export function ImportTtfDialog({
           <Button
             disabled={!file}
             onClick={() => {
-              if (file) onImport(file, pixelSize, selected);
+              if (file) onImport(file, pixelSize);
               setOpen(false);
             }}
           >

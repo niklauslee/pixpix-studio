@@ -324,32 +324,26 @@ function App({ user }: { user: DashboardUser }) {
     }
   };
 
-  const handleImportTTF = async (
-    file: File,
-    pixelSize: number,
-    rangeIds: Set<string>,
-  ) => {
+  const handleImportTTF = async (file: File, pixelSize: number) => {
     try {
       const { importTTF } = await import("@/apps/font-editor/ttf-import");
-      const buffer = await file.arrayBuffer();
       const name = file.name.replace(/\.(ttf|otf)$/i, "");
-      const { font, missing } = importTTF(
-        buffer,
-        name,
-        pixelSize,
-        codepointsForRanges(rangeIds),
-      );
+      const font = importTTF(await file.arrayBuffer(), name, pixelSize);
+      const data = serializeBDF(font);
+      // D1 caps a row at 2MB, which a full CJK font blows past
+      if (data.length > 2_000_000) {
+        flash(
+          `Too large to save — ${font.glyphs.length} glyphs come to ${Math.round(data.length / 1024 / 1024)}MB, over the 2MB limit`,
+        );
+        return;
+      }
       const response = await api("/api/fonts", {
         method: "POST",
-        body: JSON.stringify({ name, data: serializeBDF(font) }),
+        body: JSON.stringify({ name, data }),
       });
       const created: FontRow = await response.json();
       setFonts((current) => [created, ...(current ?? [])]);
-      flash(
-        missing.length > 0
-          ? `Imported ${file.name} (${missing.length} glyph${missing.length === 1 ? "" : "s"} missing from the font)`
-          : `Imported ${file.name}`,
-      );
+      flash(`Imported ${file.name} (${font.glyphs.length} glyphs)`);
     } catch (error) {
       console.error("Failed to import the font:", error);
       flash("Import failed — not a valid TTF/OTF file");
