@@ -46,8 +46,8 @@ export function Appbar({
       {...others}
     >
       <div className="flex items-center justify-start gap-6 px-4">
-        <div className="text-xl flex flex-row items-start justify-center gap-1">
-          <div className="text-xl ml-3">Pixpix studio</div>
+        <div className="flex flex-row items-start justify-center gap-1">
+          <div className="text-green-600">Pixpix studio</div>
         </div>
         <div className="text-sm text-muted-foreground">
           {APP_LABELS[active]}

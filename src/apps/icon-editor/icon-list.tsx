@@ -8,7 +8,7 @@ import type { Box, Icon } from "./icon";
 import { useIconStore } from "./icon-store";
 import { drawIcon, setupCanvas } from "./render";
 
-const THUMB_SIZE = 28;
+const THUMB_SIZE = 24;
 
 function matches(icon: Icon, filter: string): boolean {
   const value = filter.trim().toLowerCase();
@@ -117,7 +117,7 @@ export function IconList({ className, ...others }: IconListProps) {
       <div className="min-h-0 flex-1">
         <ScrollArea className="h-full w-full">
           <div
-            className="grid grid-cols-4 gap-2 px-3 pb-3"
+            className="grid grid-cols-6 gap-2 px-3 pb-3"
             onDragOver={(event) => {
               if (dragName) event.preventDefault();
             }}
