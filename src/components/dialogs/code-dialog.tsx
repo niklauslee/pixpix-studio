@@ -174,11 +174,7 @@ export function CodeDialog() {
               backgroundColor: "var(--popover)",
               margin: 0,
             }}
-            codeTagProps={{
-              style: {
-                fontFamily: '"Fixed 6x10", monospace',
-              },
-            }}
+            codeTagProps={{}}
             showLineNumbers={true}
           >
             {code}

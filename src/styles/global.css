@@ -7,7 +7,7 @@
 
 @theme {
   --font-sans: "Simpleton", sans-serif;
-  --font-mono: "Fixed 6x10", monospace;
+  --font-mono: "Departure Mono", monospace;
 }
 
 @layer base {

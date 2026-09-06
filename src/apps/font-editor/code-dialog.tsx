@@ -53,13 +53,26 @@ export function showFontCodeDialog() {
   const target = useFontCodeDialog.getState().target;
   useFontCodeDialog.setState({
     open: true,
-    identifier: target === "u8g2" ? defaultU8g2Identifier(font) : defaultGfxIdentifier(font),
+    identifier:
+      target === "u8g2"
+        ? defaultU8g2Identifier(font)
+        : defaultGfxIdentifier(font),
   });
 }
 
 export function FontCodeDialog() {
-  const { open, target, identifier, useProgmem, code, warnings, setOpen, setTarget, setIdentifier, setUseProgmem } =
-    useFontCodeDialog();
+  const {
+    open,
+    target,
+    identifier,
+    useProgmem,
+    code,
+    warnings,
+    setOpen,
+    setTarget,
+    setIdentifier,
+    setUseProgmem,
+  } = useFontCodeDialog();
   const font = useFontStore((state) => state.font);
 
   useEffect(() => {
@@ -67,8 +80,15 @@ export function FontCodeDialog() {
     const result =
       target === "u8g2"
         ? generateU8g2Font(font, identifier || defaultU8g2Identifier(font))
-        : generateAdafruitGfxFont(font, identifier || defaultGfxIdentifier(font), useProgmem);
-    useFontCodeDialog.setState({ code: result.code, warnings: result.warnings });
+        : generateAdafruitGfxFont(
+            font,
+            identifier || defaultGfxIdentifier(font),
+            useProgmem,
+          );
+    useFontCodeDialog.setState({
+      code: result.code,
+      warnings: result.warnings,
+    });
     // `code`/`warnings` are derived, not inputs — excluding them keeps this from looping.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, target, identifier, useProgmem, font]);
@@ -76,7 +96,11 @@ export function FontCodeDialog() {
   const switchTarget = (next: Target) => {
     if (next === target) return;
     setTarget(next);
-    setIdentifier(next === "u8g2" ? defaultU8g2Identifier(font) : defaultGfxIdentifier(font));
+    setIdentifier(
+      next === "u8g2"
+        ? defaultU8g2Identifier(font)
+        : defaultGfxIdentifier(font),
+    );
   };
 
   return (
@@ -100,23 +124,35 @@ export function FontCodeDialog() {
                   Adafruit GFX
                 </Button>
               </div>
-              <Button variant="outline" onClick={() => navigator.clipboard.writeText(code)}>
+              <Button
+                variant="outline"
+                onClick={() => navigator.clipboard.writeText(code)}
+              >
                 Copy Code
               </Button>
             </div>
             <div className="flex items-center gap-4 py-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Identifier</span>
+                <span className="text-xs text-muted-foreground">
+                  Identifier
+                </span>
                 <TextField
                   className="h-7 w-56"
                   value={identifier}
                   onChange={setIdentifier}
-                  placeholder={target === "u8g2" ? defaultU8g2Identifier(font) : defaultGfxIdentifier(font)}
+                  placeholder={
+                    target === "u8g2"
+                      ? defaultU8g2Identifier(font)
+                      : defaultGfxIdentifier(font)
+                  }
                 />
               </div>
               {target === "gfx" && (
                 <label className="flex items-center gap-2 text-xs">
-                  <Checkbox checked={useProgmem} onCheckedChange={(value) => setUseProgmem(value === true)} />
+                  <Checkbox
+                    checked={useProgmem}
+                    onCheckedChange={(value) => setUseProgmem(value === true)}
+                  />
                   Use PROGMEM
                 </label>
               )}
@@ -130,7 +166,10 @@ export function FontCodeDialog() {
             )}
           </div>
         </DialogHeader>
-        <div className="absolute inset-x-0 bottom-0" style={{ top: warnings.length > 0 ? "9.5rem" : "8rem" }}>
+        <div
+          className="absolute inset-x-0 bottom-0"
+          style={{ top: warnings.length > 0 ? "9.5rem" : "8rem" }}
+        >
           <SyntaxHighlighter
             className="h-full w-full text-sm"
             language="c"
@@ -139,11 +178,7 @@ export function FontCodeDialog() {
               backgroundColor: "var(--popover)",
               margin: 0,
             }}
-            codeTagProps={{
-              style: {
-                fontFamily: '"Fixed 6x10", monospace',
-              },
-            }}
+            codeTagProps={{}}
             showLineNumbers={true}
           >
             {code}

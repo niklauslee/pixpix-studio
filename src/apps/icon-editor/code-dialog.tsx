@@ -53,8 +53,17 @@ export function showIconCodeDialog() {
 }
 
 export function IconCodeDialog() {
-  const { open, lang, useProgmem, scope, code, setOpen, setLang, setUseProgmem, setScope } =
-    useIconCodeDialog();
+  const {
+    open,
+    lang,
+    useProgmem,
+    scope,
+    code,
+    setOpen,
+    setLang,
+    setUseProgmem,
+    setScope,
+  } = useIconCodeDialog();
   const project = useIconStore((state) => state.project);
   const name = useIconStore((state) => state.name);
 
@@ -157,11 +166,7 @@ export function IconCodeDialog() {
               backgroundColor: "var(--popover)",
               margin: 0,
             }}
-            codeTagProps={{
-              style: {
-                fontFamily: '"Fixed 6x10", monospace',
-              },
-            }}
+            codeTagProps={{}}
             showLineNumbers={true}
           >
             {code}
