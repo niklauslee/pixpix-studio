@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { toHex } from "./palette";
+import { toHex, TRANSPARENT } from "./palette";
 import { getPixel, type Box, type Sprite } from "./sprite";
 import {
   drawLine,
@@ -22,6 +22,9 @@ const COLOR = {
   border: "#52525b",
   ruler: "#71717a",
   center: "#3f3f46",
+  // checkerboard behind transparent pixels
+  checkerLight: "#2a2a2e",
+  checkerDark: "#1c1c1f",
 };
 
 interface Stroke {
@@ -114,11 +117,23 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
 
     ctx.translate(MARGIN + 0.5, MARGIN + 0.5);
 
-    // pixels
+    // pixels — transparent ones as a 2×2 checkerboard per cell
+    const half = cellSize / 2;
     for (let row = 0; row < box.h; row++) {
       for (let col = 0; col < box.w; col++) {
-        ctx.fillStyle = toHex(pixels[row * box.w + col] ?? 0);
-        ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        const x = col * cellSize;
+        const y = row * cellSize;
+        const color = pixels[row * box.w + col] ?? TRANSPARENT;
+        if (color === TRANSPARENT) {
+          ctx.fillStyle = COLOR.checkerDark;
+          ctx.fillRect(x, y, cellSize, cellSize);
+          ctx.fillStyle = COLOR.checkerLight;
+          ctx.fillRect(x, y, half, half);
+          ctx.fillRect(x + half, y + half, half, half);
+          continue;
+        }
+        ctx.fillStyle = toHex(color);
+        ctx.fillRect(x, y, cellSize, cellSize);
       }
     }
 
@@ -179,22 +194,26 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
   const inside = (point: Point) =>
     point.col >= 0 && point.col < box.w && point.row >= 0 && point.row < box.h;
 
+  /** Eyedropper — picks `TRANSPARENT` too, since it's a selectable color. */
+  const pick = (point: Point) =>
+    setColor(getPixel(box, sprite.pixels, point.col, point.row));
+
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const point = pointAt(event);
     if (!inside(point)) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     if (tool === "eyedropper") {
       pickingRef.current = true;
-      setColor(getPixel(box, sprite.pixels, point.col, point.row));
+      pick(point);
       return;
     }
-    // eraser / alt / right button always paints black (0x000000)
+    // eraser / alt / right button always clears to transparent
     const erase =
       tool === "eraser" ||
       event.altKey ||
       event.buttons === 2 ||
       event.button === 2;
-    const strokeColor = erase ? 0 : color;
+    const strokeColor = erase ? TRANSPARENT : color;
     const stroke: Stroke = {
       start: point,
       last: point,
@@ -213,7 +232,7 @@ export function SpriteCanvas({ sprite, className, ...others }: SpriteCanvasProps
     const point = pointAt(event);
     setHover(inside(point) ? point : null);
     if (pickingRef.current) {
-      if (inside(point)) setColor(getPixel(box, sprite.pixels, point.col, point.row));
+      if (inside(point)) pick(point);
       return;
     }
     const stroke = strokeRef.current;

@@ -7,6 +7,15 @@
  * that list.
  */
 
+/**
+ * Pixel value for "no color". Every other pixel value is an opaque packed
+ * RGB color (`0..0xffffff`); this one is drawn as nothing — a checkerboard in
+ * the editing grid, a gap in thumbnails, and transparency in SVG/PNG export.
+ * Selectable as the draw color (a fixed swatch in the toolbar), but never
+ * stored as a palette entry.
+ */
+export const TRANSPARENT = -1;
+
 export function packRGB(r: number, g: number, b: number): number {
   return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
 }

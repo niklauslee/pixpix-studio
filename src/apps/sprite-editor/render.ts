@@ -1,6 +1,6 @@
 /** Canvas rendering for sprites, shared by the sprite browser and the editing grid. */
 
-import { toHex } from "./palette";
+import { toHex, TRANSPARENT } from "./palette";
 import type { Box, Sprite } from "./sprite";
 
 /** Prepare a canvas for crisp pixel drawing at the device pixel ratio. */
@@ -29,7 +29,8 @@ export function setupCanvas(
 /**
  * Draw a sprite with its top-left corner at `x`, `y`, scaled by `scale`.
  * Unlike the icon editor's `drawIcon` (one caller-supplied fill color for all
- * "on" pixels), every pixel carries its own RGB color.
+ * "on" pixels), every pixel carries its own RGB color. `TRANSPARENT` pixels
+ * are skipped, leaving whatever is already on the canvas.
  */
 export function drawSprite(
   ctx: CanvasRenderingContext2D,
@@ -41,7 +42,9 @@ export function drawSprite(
 ) {
   for (let row = 0; row < box.h; row++) {
     for (let col = 0; col < box.w; col++) {
-      ctx.fillStyle = toHex(sprite.pixels[row * box.w + col] ?? 0);
+      const color = sprite.pixels[row * box.w + col] ?? TRANSPARENT;
+      if (color === TRANSPARENT) continue;
+      ctx.fillStyle = toHex(color);
       ctx.fillRect(x + col * scale, y + row * scale, scale, scale);
     }
   }

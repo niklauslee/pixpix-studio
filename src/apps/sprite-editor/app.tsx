@@ -1,11 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import { SaveIcon } from "@/components/icons";
+import { ExportIcon, SaveIcon } from "@/components/icons";
 import { Appbar } from "@/components/appbar";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { findSprite, parseSpriteSet, serializeSpriteSet } from "./sprite";
 import { clear, flipHorizontal, flipVertical, shift, type Tool } from "./draw";
+import {
+  generateSpritePNG,
+  generateSpriteSVG,
+  MAX_PNG_SCALE,
+  MIN_PNG_SCALE,
+  spriteFileName,
+} from "./image-generator";
 import { useSpriteStore } from "./sprite-store";
 import { SpriteCanvas } from "./sprite-canvas";
 import { SpriteList } from "./sprite-list";
@@ -21,6 +37,22 @@ const TOOL_KEYS: Record<string, Tool> = {
   f: "fill",
   i: "eyedropper",
 };
+
+const PNG_SCALES = Array.from(
+  { length: MAX_PNG_SCALE - MIN_PNG_SCALE + 1 },
+  (_, index) => MIN_PNG_SCALE + index,
+);
+
+function downloadBlob(name: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  // deferred: revoking synchronously can cut off the download before the
+  // browser has started reading the blob
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 
 const SHIFT_KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, -1],
@@ -140,6 +172,32 @@ function App({
     }
   };
 
+  const handleExportSVG = () => {
+    if (!sprite) return;
+    try {
+      const svg = generateSpriteSVG(project.box, sprite);
+      downloadBlob(
+        `${spriteFileName(sprite)}.svg`,
+        new Blob([svg], { type: "image/svg+xml" }),
+      );
+    } catch (error) {
+      console.error("Failed to export SVG:", error);
+      flash("Export failed");
+    }
+  };
+
+  const handleExportPNG = async (scale: number) => {
+    if (!sprite) return;
+    try {
+      const png = await generateSpritePNG(project.box, sprite, scale);
+      const suffix = scale === 1 ? "" : `@${scale}x`;
+      downloadBlob(`${spriteFileName(sprite)}${suffix}.png`, png);
+    } catch (error) {
+      console.error("Failed to export PNG:", error);
+      flash("Export failed");
+    }
+  };
+
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
 
@@ -250,6 +308,42 @@ function App({
               {savedName}
             </span>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!sprite}
+                  title="Export the selected sprite"
+                />
+              }
+            >
+              <ExportIcon className="size-3.5" />
+              Export
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-auto">
+              <DropdownMenuItem onClick={handleExportSVG}>
+                Export as SVG
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Export as PNG</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {PNG_SCALES.map((scale) => (
+                    <DropdownMenuItem
+                      key={scale}
+                      onClick={() => handleExportPNG(scale)}
+                    >
+                      <span className="w-6">{scale}x</span>
+                      <span className="ml-auto pl-4 text-muted-foreground">
+                        {project.box.w * scale}×{project.box.h * scale}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {user ? (
             <Button
               variant="outline"

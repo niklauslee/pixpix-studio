@@ -1,10 +1,10 @@
 /**
  * Sprite set model. Every sprite in a set shares one fixed pixel box, same as
  * the icon editor's `IconSet` — but each pixel is a packed 24-bit RGB color
- * (`0xRRGGBB`, see `palette.ts`) instead of a boolean.
+ * (`0xRRGGBB`, see `palette.ts`) or `TRANSPARENT`, instead of a boolean.
  */
 
-import { DEFAULT_PALETTE } from "./palette";
+import { DEFAULT_PALETTE, TRANSPARENT } from "./palette";
 
 export interface Box {
   w: number;
@@ -13,7 +13,10 @@ export interface Box {
 
 export interface Sprite {
   name: string;
-  /** Row-major RGB (`0xRRGGBB`) bitmap in the set's box frame, length = `box.w * box.h`. */
+  /**
+   * Row-major bitmap in the set's box frame, length = `box.w * box.h`. Each
+   * entry is an RGB color (`0xRRGGBB`) or `TRANSPARENT`.
+   */
   pixels: number[];
 }
 
@@ -30,7 +33,7 @@ export function pixelCount(box: Box): number {
 }
 
 export function emptyPixels(box: Box): number[] {
-  return new Array(pixelCount(box)).fill(0);
+  return new Array(pixelCount(box)).fill(TRANSPARENT);
 }
 
 export function getPixel(
@@ -39,8 +42,8 @@ export function getPixel(
   col: number,
   row: number,
 ): number {
-  if (col < 0 || col >= box.w || row < 0 || row >= box.h) return 0;
-  return pixels[row * box.w + col] ?? 0;
+  if (col < 0 || col >= box.w || row < 0 || row >= box.h) return TRANSPARENT;
+  return pixels[row * box.w + col] ?? TRANSPARENT;
 }
 
 export function findSprite(project: SpriteSet, name: string): Sprite | null {
@@ -65,7 +68,7 @@ export function createSpriteSet(box: Partial<Box> = {}): SpriteSet {
 
 /**
  * Copy a bitmap from one box frame into another, top-left anchored. Pixels
- * falling outside the new box are dropped; new cells fill with `0`.
+ * falling outside the new box are dropped; new cells are `TRANSPARENT`.
  */
 export function remapPixels(from: Box, pixels: number[], to: Box): number[] {
   const result = emptyPixels(to);
@@ -90,30 +93,45 @@ export function resizeBox(project: SpriteSet, box: Box): SpriteSet {
   return { ...project, box, sprites };
 }
 
-/** Pack a pixel bitmap 3 bytes/pixel (RGB) and base64-encode it for JSON. */
+/**
+ * Serialized format version. Version 1 (no `version` field) packed 3
+ * bytes/pixel (RGB) and had no transparency; version 2 packs 4 bytes/pixel
+ * (RGBA, alpha `0` = `TRANSPARENT`, `255` = opaque).
+ */
+const FORMAT_VERSION = 2;
+
+/** Pack a pixel bitmap 4 bytes/pixel (RGBA) and base64-encode it for JSON. */
 function packPixels(pixels: number[]): string {
-  const bytes = new Uint8Array(pixels.length * 3);
+  const bytes = new Uint8Array(pixels.length * 4);
   for (let i = 0; i < pixels.length; i++) {
+    if (pixels[i] === TRANSPARENT) continue; // all four bytes stay 0
     const color = pixels[i] & 0xffffff;
-    bytes[i * 3] = (color >> 16) & 0xff;
-    bytes[i * 3 + 1] = (color >> 8) & 0xff;
-    bytes[i * 3 + 2] = color & 0xff;
+    bytes[i * 4] = (color >> 16) & 0xff;
+    bytes[i * 4 + 1] = (color >> 8) & 0xff;
+    bytes[i * 4 + 2] = color & 0xff;
+    bytes[i * 4 + 3] = 0xff;
   }
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary);
 }
 
-/** Reverse of {@link packPixels}, padded/truncated to `count` pixels. */
-function unpackPixels(packed: string, count: number): number[] {
+/**
+ * Reverse of {@link packPixels}, padded/truncated to `count` pixels (padding
+ * is `TRANSPARENT`). Version 1 data (3 bytes/pixel, no alpha) unpacks as
+ * fully opaque — black stays black rather than being guessed as transparent.
+ */
+function unpackPixels(packed: string, count: number, version: number): number[] {
   const binary = atob(packed);
-  const pixels = new Array<number>(count).fill(0);
+  const stride = version >= 2 ? 4 : 3;
+  const pixels = new Array<number>(count).fill(TRANSPARENT);
   for (let i = 0; i < count; i++) {
-    const r = binary.charCodeAt(i * 3);
+    const r = binary.charCodeAt(i * stride);
     if (r !== r) break; // NaN once past the end of `binary`
-    const g = binary.charCodeAt(i * 3 + 1) || 0;
-    const b = binary.charCodeAt(i * 3 + 2) || 0;
-    pixels[i] = (r << 16) | (g << 8) | b;
+    const g = binary.charCodeAt(i * stride + 1) || 0;
+    const b = binary.charCodeAt(i * stride + 2) || 0;
+    const a = stride === 4 ? binary.charCodeAt(i * stride + 3) || 0 : 0xff;
+    pixels[i] = a === 0 ? TRANSPARENT : (r << 16) | (g << 8) | b;
   }
   return pixels;
 }
@@ -129,7 +147,12 @@ export function serializeSpriteSet(project: SpriteSet): string {
     name: sprite.name,
     pixels: packPixels(sprite.pixels),
   }));
-  return JSON.stringify({ box: project.box, palette: project.palette, sprites });
+  return JSON.stringify({
+    version: FORMAT_VERSION,
+    box: project.box,
+    palette: project.palette,
+    sprites,
+  });
 }
 
 /** Parse and validate sprite set JSON. Throws on invalid input. */
@@ -138,7 +161,8 @@ export function parseSpriteSet(json: string): SpriteSet {
   if (typeof parsed !== "object" || parsed === null) {
     throw new Error("Not a valid sprite set file");
   }
-  const { box, palette, sprites } = parsed as Record<string, unknown>;
+  const { version, box, palette, sprites } = parsed as Record<string, unknown>;
+  const validVersion = typeof version === "number" ? version : 1;
   if (
     typeof box !== "object" ||
     box === null ||
@@ -164,7 +188,7 @@ export function parseSpriteSet(json: string): SpriteSet {
     }
     return {
       name: (item as SerializedSprite).name,
-      pixels: unpackPixels((item as SerializedSprite).pixels, count),
+      pixels: unpackPixels((item as SerializedSprite).pixels, count, validVersion),
     };
   });
   return {

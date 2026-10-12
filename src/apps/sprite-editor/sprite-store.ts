@@ -14,6 +14,7 @@ import {
   type SpriteSet,
 } from "./sprite";
 import type { Point, Tool } from "./draw";
+import { TRANSPARENT } from "./palette";
 
 const MAX_UNDO = 100;
 
@@ -46,7 +47,7 @@ export interface SpriteEditorState {
   /** Name of the sprite being edited, `""` when the project has no sprites. */
   name: string;
   tool: Tool;
-  /** Currently selected RGB color (`0xRRGGBB`) used by pen/line/rect/fill. */
+  /** Currently selected color used by pen/line/rect/fill: RGB (`0xRRGGBB`) or `TRANSPARENT`. */
   color: number;
   /** Editing grid zoom, in screen pixels per sprite pixel. */
   cellSize: number;
@@ -64,7 +65,7 @@ export interface SpriteEditorState {
   selectAdjacent: (delta: number) => void;
   setTool: (tool: Tool) => void;
   setColor: (color: number) => void;
-  /** Add a color to the project's palette swatch list, if not already present. */
+  /** Add a color to the project's palette swatch list, if not already present (never `TRANSPARENT`). */
   addPaletteColor: (color: number) => void;
   /** Remove a color from the project's palette swatch list. */
   removePaletteColor: (color: number) => void;
@@ -127,9 +128,12 @@ export const useSpriteStore = create<SpriteEditorState>()((set, get) => ({
   },
 
   setTool: (tool) => set({ tool }),
-  setColor: (color) => set({ color: color & 0xffffff }),
+  setColor: (color) =>
+    set({ color: color === TRANSPARENT ? TRANSPARENT : color & 0xffffff }),
   addPaletteColor: (color) => {
     const { project } = get();
+    // transparent has its own fixed swatch in the toolbar, not a palette entry
+    if (color === TRANSPARENT) return;
     const next = color & 0xffffff;
     if (project.palette.includes(next)) return;
     set({ project: { ...project, palette: [...project.palette, next] } });

@@ -22,7 +22,7 @@ import {
   UndoIcon,
   XIcon,
 } from "@/components/icons";
-import { toHex, fromHex } from "./palette";
+import { toHex, fromHex, TRANSPARENT } from "./palette";
 import { findSprite } from "./sprite";
 import { clear, flipHorizontal, flipVertical, shift, type Tool } from "./draw";
 import { useSpriteStore } from "./sprite-store";
@@ -71,6 +71,16 @@ const SHIFTS: {
   { label: "right", icon: ArrowRightIcon, dcol: 1, drow: 0 },
 ];
 
+/** Checkerboard background for swatches showing `TRANSPARENT`. */
+const CHECKER: React.CSSProperties = {
+  background: "repeating-conic-gradient(#52525b 0 25%, #27272a 0 50%) 0 0 / 10px 10px",
+};
+
+/** Inline style for a swatch of `color`. */
+function swatchStyle(color: number): React.CSSProperties {
+  return color === TRANSPARENT ? CHECKER : { backgroundColor: toHex(color) };
+}
+
 const isMac = detectPlatform() === "darwin";
 const ZOOM_IN_HINT = isMac ? "⌘+" : "Ctrl++";
 const ZOOM_OUT_HINT = isMac ? "⌘-" : "Ctrl+-";
@@ -98,6 +108,7 @@ export function Toolbar() {
 
   const sprite = findSprite(project, name);
   const disabled = sprite === null;
+  const transparent = color === TRANSPARENT;
 
   const apply = (transform: (pixels: number[]) => number[]) => {
     if (!sprite) return;
@@ -222,12 +233,12 @@ export function Toolbar() {
       <div className="flex min-h-10 w-full flex-wrap items-center gap-1.5 px-4 pb-2">
         <label
           className="relative size-6 shrink-0 cursor-pointer overflow-hidden border-[1.5px] border-neutral-700"
-          title={`Custom color ⎯ ${toHex(color)}`}
-          style={{ backgroundColor: toHex(color) }}
+          title={`Custom color ⎯ ${transparent ? "transparent" : toHex(color)}`}
+          style={swatchStyle(color)}
         >
           <input
             type="color"
-            value={toHex(color)}
+            value={transparent ? "#000000" : toHex(color)}
             onChange={(event) => setColor(fromHex(event.target.value))}
             className="absolute inset-0 size-full cursor-pointer opacity-0"
           />
@@ -236,11 +247,24 @@ export function Toolbar() {
           size="icon-sm"
           variant="outline"
           title="Add current color to the palette"
+          disabled={transparent}
           onClick={() => addPaletteColor(color)}
         >
           <PlusIcon className={ICON} />
         </Button>
         <div className="h-6 w-px bg-neutral-700" />
+        <button
+          type="button"
+          title="Transparent"
+          className={cn(
+            "size-6 shrink-0 cursor-pointer border-[1.5px]",
+            transparent
+              ? "border-neutral-100 ring-1 ring-neutral-100"
+              : "border-neutral-700",
+          )}
+          style={CHECKER}
+          onClick={() => setColor(TRANSPARENT)}
+        />
         {project.palette.map((paletteColor) => {
           const hex = toHex(paletteColor);
           return (

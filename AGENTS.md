@@ -10,9 +10,10 @@ displays plus one general-purpose RGB sprite editor:
 - **Icon editor** (`/icon`) — edits many named icon bitmaps that share one
   fixed size (an icon set) and generates u8g2-ready XBM C byte arrays.
 - **Sprite editor** (`/sprite`) — edits many named sprites that share one
-  fixed size (a sprite set), with a full RGB color per pixel instead of the
-  1-bit pixels the other three editors use. No code generation (u8g2 is
-  1bpp-only and has no natural RGB target).
+  fixed size (a sprite set), with a full RGB color (or transparent) per pixel
+  instead of the 1-bit pixels the other three editors use. No code generation
+  (u8g2 is 1bpp-only and has no natural RGB target); the selected sprite
+  exports as SVG or PNG instead.
 
 Editing works anonymously with no account, but nothing persists until you
 sign in: the scene, the font, the icon set and the sprite set all stay in
@@ -306,34 +307,41 @@ a single `keydown` listener in `app.tsx`, same as the font editor.
 A self-contained sprite set editor at `/sprite`, modeled closely on the icon
 editor: one fixed `Box` shared by every sprite in the set, sprites keyed by
 name. The one structural difference from every other editor in the app: each
-pixel is a **packed 24-bit RGB color (`0xRRGGBB`)**, not a boolean — any RGB
-color can be painted, opaque only (no alpha channel/transparency). Each
+pixel is a **packed 24-bit RGB color (`0xRRGGBB`)** or `TRANSPARENT` (`-1`,
+from `palette.ts`), not a boolean — any opaque RGB color or transparent can
+be painted (the eraser, new sprites and cells exposed by shift or box resize
+are transparent too); there's no partial alpha. Each
 sprite set also carries its own editable `palette: number[]` swatch list
 (seeded from `palette.ts`'s `DEFAULT_PALETTE`, the old fixed 16-color
 CGA/EGA palette) shown as quick-pick swatches in the toolbar — it's just a
 suggestion list, not a constraint on pixel values. No editor core, no
 `AppContext`, no engine, no command manager, and **no code generation** —
 u8g2 is 1bpp-only and has no natural RGB target, so unlike the other three
-editors there's no Code button/dialog here.
+editors there's no Code button/dialog here — only an Export dropdown (SVG /
+PNG of the selected sprite, see `image-generator.ts`).
 
-- `palette.ts` — RGB helpers (`packRGB`, `toHex`, `fromHex`) plus
+- `palette.ts` — `TRANSPARENT`, RGB helpers (`packRGB`, `toHex`, `fromHex`) plus
   `DEFAULT_PALETTE`, the 16-color CGA/EGA starter swatch list seeded into
   every new `SpriteSet.palette`.
 - `sprite.ts` — the `SpriteSet` / `Sprite` / `Box` model: `createSpriteSet`,
   `createSprite`, `findSprite`, `uniqueName`, `remapPixels` / `resizeBox`
   (top-left anchored, same shape as the icon editor's), `serializeSpriteSet`
-  / `parseSpriteSet`. `packPixels`/`unpackPixels` pack 3 bytes/pixel (RGB) —
-  not 1 bit/pixel like `icon-editor/icon.ts`, and no migration from the old
-  4-bit-index format (dropped when RGB replaced the fixed palette).
+  / `parseSpriteSet`. `packPixels`/`unpackPixels` pack 4 bytes/pixel (RGBA,
+  alpha `0` = `TRANSPARENT`) under a top-level `version: 2` — not 1 bit/pixel
+  like `icon-editor/icon.ts`. Data with no `version` is the older 3
+  bytes/pixel (RGB) format and loads fully opaque (black stays black); no
+  migration from the even older 4-bit-index format (dropped when RGB
+  replaced the fixed palette).
 - `draw.ts` — pixel operations (pen, eraser, line, rect, flood fill, shift,
   flip, clear) and the `Tool` union, operating on `number[]` (packed RGB) +
   `Box` instead of `boolean[]`. No `invert` — not meaningful for arbitrary
   RGB. The union also has `eyedropper`, but it's UI-only: `sprite-canvas.tsx`
   intercepts it before any bitmap operation runs and reads the clicked
-  pixel's color into the store's `color` instead of painting. A
+  pixel's color (including `TRANSPARENT`) into the store's `color` instead
+  of painting. A
   near-duplicate of `icon-editor/draw.ts`, not a shared import (see above).
 - `sprite-store.ts` — zustand store: the `SpriteSet`, selected sprite name,
-  tool, **selected draw `color` (packed RGB)**, cell size, guides, filter,
+  tool, **selected draw `color` (packed RGB or `TRANSPARENT`)**, cell size, guides, filter,
   hover cell, and an undo stack of bitmap patches keyed by sprite name
   (structural edits — add/remove sprite, box resize — clear it); also
   `addPaletteColor`/`removePaletteColor` for the project's swatch list
@@ -341,18 +349,29 @@ editors there's no Code button/dialog here.
   persisted locally: starts as a blank 16×16 set, kept in memory only. Only
   cell-size (zoom) lives in `localStorage` (`sprite-editor-cell-size`).
 - `render.ts` — `setupCanvas` plus `drawSprite`, which paints each pixel with
-  `toHex(color)` (unlike the icon editor's `drawIcon`, which uses one
-  caller-supplied fill color for every "on" pixel).
+  `toHex(color)` and skips `TRANSPARENT` ones (unlike the icon editor's
+  `drawIcon`, which uses one caller-supplied fill color for every "on"
+  pixel). The editing grid in `sprite-canvas.tsx` draws transparent cells as
+  a checkerboard.
+- `image-generator.ts` — export of one sprite, transparent pixels left out:
+  `generateSpriteSVG` (native size, one `<path>` per color built from
+  horizontal runs, `crispEdges`) and `generateSpritePNG(box, sprite, scale)`
+  (integer scale 1–10, nearest neighbor, via `canvas.toBlob`). `app.tsx`'s
+  appbar Export dropdown offers "Export as SVG" and an "Export as PNG"
+  submenu listing each scale with its output size; PNG files above 1x are
+  named `<name>@<scale>x.png`.
 - `app.tsx` — layout (appbar / sprite list / grid + toolbar / properties /
   status bar), keyboard shortcuts (same as the icon editor's, minus the
   invert shortcut). When opened via `/sprite?id=`, `initialSpriteSet.data` is
   parsed with `parseSpriteSet()` into the store on mount. Same Save / "Sign
   in to Save" pattern as the other editors (`POST`/`PATCH`
   `/api/sprite-sets`); with `sprite-list.tsx`, `sprite-canvas.tsx`,
-  `toolbar.tsx` (its third row is a native color picker plus the project's
-  editable palette swatches — click a swatch to select its color, hover to
-  reveal a remove button, or add the current picker color to the palette —
-  that sets `sprite-store.ts`'s `color`), `properties.tsx`.
+  `toolbar.tsx` (its third row is a native color picker, a fixed
+  checkerboard "Transparent" swatch, then the project's editable palette
+  swatches — click a swatch to select its color, hover to reveal a remove
+  button, or add the current picker color to the palette (disabled while
+  transparent is selected; the palette never holds `TRANSPARENT`) — that
+  sets `sprite-store.ts`'s `color`), `properties.tsx`.
 
 ## Dashboard, auth & cloud persistence
 
